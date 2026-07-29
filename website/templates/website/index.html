@@ -1,0 +1,306 @@
+{% extends 'website/base_template.html' %}
+
+{% load static %}
+{% load humanize %}
+
+{% block home_active %}active{% endblock %}
+
+{% block styleblock %}
+<link rel="stylesheet" href="{% static 'css/partner_showcase.css' %}?v=20260729-1">
+<link rel="stylesheet" href="{% static 'css/recognition_video.css' %}?v=20260729-1">
+{% endblock %}
+
+{% block content %}
+<section class="sinel-hero{% if not hero %} sinel-hero-default{% endif %}"
+  {% if hero %}style="background-image: url('{{ hero.image.url }}');"{% endif %}>
+  <div class="sinel-hero-overlay"></div>
+  <div class="container sinel-hero-content">
+    <span class="sinel-eyebrow">Specialist family care in Tema</span>
+    <h1>{% if hero %}{{ hero.title }}{% else %}Better Healthcare{% endif %}</h1>
+    <p>
+      {% if hero and hero.description %}
+      {{ hero.description }}
+      {% else %}
+      Trusted, compassionate care for every stage of life—from us to you.
+      {% endif %}
+    </p>
+    <div class="sinel-hero-actions">
+      <a href="{% if hero %}{{ hero.button_url }}{% else %}{% url 'website:services' %}{% endif %}"
+        class="btn btn-primary btn-lg">
+        {% if hero %}{{ hero.button_label }}{% else %}Explore our services{% endif %}
+        <i class="bi bi-arrow-right ml-2"></i>
+      </a>
+      <a href="{% url 'communications:book_appointment' %}" class="btn btn-light btn-lg">
+        Request an appointment
+      </a>
+    </div>
+  </div>
+</section>
+
+{% if homepage_shortcuts %}
+<section class="home-shortcuts" aria-labelledby="home-services-title">
+  <div class="container">
+    <div class="section-heading text-center">
+      <span class="sinel-eyebrow">Care made easier</span>
+      <h2 id="home-services-title">Find the right service</h2>
+      <p>Choose a service to see schedules, specialists and care information.</p>
+    </div>
+    <div class="home-shortcut-grid">
+      {% for shortcut in homepage_shortcuts %}
+      <a class="home-shortcut-card home-shortcut-{{ shortcut.accent }}" href="{{ shortcut.service_url }}">
+        {% if shortcut.ribbon_text %}
+        <span class="home-shortcut-ribbon home-shortcut-ribbon-{{ shortcut.ribbon_position }} home-shortcut-ribbon-{{ shortcut.ribbon_style }}">
+          {{ shortcut.ribbon_text }}
+        </span>
+        {% endif %}
+        <span class="home-shortcut-icon" aria-hidden="true">
+          <i class="bi bi-{{ shortcut.icon }}"></i>
+        </span>
+        <span class="home-shortcut-title">{{ shortcut.display_label }}</span>
+        <span class="home-shortcut-description">{{ shortcut.display_description }}</span>
+        <span class="home-shortcut-link">View service <i class="bi bi-arrow-right"></i></span>
+      </a>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-5">
+      <a href="{% url 'website:services' %}" class="btn btn-outline-primary">
+        View all services
+      </a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+<section class="home-story bg-light">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6 py-4">
+        <span class="sinel-eyebrow">Care that grows with you</span>
+        <h2>A family hospital built around people</h2>
+        <div class="home-story-copy">
+          {{ about.overview|safe }}
+        </div>
+        <a href="{% url 'website:about' %}" class="btn btn-primary mt-3">
+          Our story <i class="bi bi-arrow-right ml-2"></i>
+        </a>
+      </div>
+      <div class="col-lg-6">
+        <div class="home-story-image">
+          <img src="{% static 'img/bg-doctor.png' %}" alt="Sinel healthcare professional">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if homepage_video and homepage_video.embed_url %}
+<section class="home-video-section" aria-labelledby="home-video-title">
+  <div class="home-video-shape home-video-shape--one" aria-hidden="true"></div>
+  <div class="home-video-shape home-video-shape--two" aria-hidden="true"></div>
+  <div class="container">
+    <div class="home-video-layout">
+      <div class="home-video-copy">
+        <span class="home-video-eyebrow">{{ homepage_video.eyebrow }}</span>
+        <h2 id="home-video-title">{{ homepage_video.title }}</h2>
+        {% if homepage_video.description %}
+        <p>{{ homepage_video.description }}</p>
+        {% endif %}
+
+        <div class="home-video-facts" aria-label="Sinel Hospital at a glance">
+          <div>
+            <strong>40+</strong>
+            <span>Years of care</span>
+          </div>
+          <div>
+            <strong>24/7</strong>
+            <span>Always available</span>
+          </div>
+          <div>
+            <strong>{{ visible_service_count }}</strong>
+            <span>Published services</span>
+          </div>
+        </div>
+
+        <a class="home-video-text-link" href="{{ homepage_video.youtube_url }}"
+          target="_blank" rel="noopener" data-video-trigger
+          data-video-embed="{{ homepage_video.embed_url }}">
+          <i class="bi bi-play-circle-fill" aria-hidden="true"></i>
+          Watch the hospital tour
+        </a>
+      </div>
+
+      <a class="home-video-poster" href="{{ homepage_video.youtube_url }}"
+        target="_blank" rel="noopener" data-video-trigger
+        data-video-embed="{{ homepage_video.embed_url }}"
+        aria-label="Play {{ homepage_video.title }}">
+        <img src="{{ homepage_video.display_poster_url }}"
+          alt="Dr. McCarthy at Sinel Specialist Hospital">
+        <span class="home-video-poster-overlay" aria-hidden="true"></span>
+        <span class="home-video-play" aria-hidden="true">
+          <i class="bi bi-play-fill"></i>
+        </span>
+        <span class="home-video-duration">1:36 hospital tour</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<dialog class="home-video-dialog" id="home-video-dialog"
+  aria-label="{{ homepage_video.title }} video">
+  <div class="home-video-dialog-shell">
+    <div class="home-video-dialog-toolbar">
+      <div>
+        <span>{{ homepage_video.eyebrow }}</span>
+        <strong>{{ homepage_video.title }}</strong>
+      </div>
+      <form method="dialog">
+        <button class="home-video-dialog-close" aria-label="Close hospital video">
+          <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+      </form>
+    </div>
+    <div class="home-video-frame">
+      <iframe title="{{ homepage_video.title }}"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen></iframe>
+    </div>
+  </div>
+</dialog>
+{% endif %}
+
+{% if partners %}
+<section class="home-partners" aria-labelledby="home-partners-title">
+  <div class="container">
+    <div class="home-partners-heading">
+      <div>
+        <span class="sinel-eyebrow">Trusted relationships</span>
+        <h2 id="home-partners-title">Working together for better care</h2>
+        <p>Organisations helping us make quality healthcare easier to access.</p>
+      </div>
+      <a href="{% url 'website:partners' %}" class="home-partners-link">
+        Meet our partners
+        <i class="bi bi-arrow-right" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+
+  <div class="partner-marquee{% if partners|length == 1 %} partner-marquee--static{% endif %}"
+    aria-label="Sinel Hospital partner organisations">
+    <div class="partner-marquee-track">
+      <div class="partner-marquee-group">
+        {% for partner in partners %}
+          {% if partner.website %}
+          <a class="partner-marquee-item" href="{{ partner.website }}" target="_blank" rel="noopener"
+            aria-label="Visit {{ partner.name }} website">
+            <img src="{{ partner.logo.url }}" alt="{{ partner.name }}">
+          </a>
+          {% else %}
+          <div class="partner-marquee-item">
+            <img src="{{ partner.logo.url }}" alt="{{ partner.name }}">
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      {% if partners|length > 1 %}
+      <div class="partner-marquee-group" aria-hidden="true">
+        {% for partner in partners %}
+          {% if partner.website %}
+          <a class="partner-marquee-item" href="{{ partner.website }}" target="_blank" rel="noopener" tabindex="-1">
+            <img src="{{ partner.logo.url }}" alt="">
+          </a>
+          {% else %}
+          <div class="partner-marquee-item">
+            <img src="{{ partner.logo.url }}" alt="">
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if team %}
+<section class="page-section home-team">
+  <div class="container">
+    <div class="section-heading text-center">
+      <span class="sinel-eyebrow">Experienced professionals</span>
+      <h2>Meet our care team</h2>
+    </div>
+    <div class="d-horizontal-scroll">
+      <span class="control-btn previous" aria-hidden="true"><i class="bi bi-chevron-left"></i></span>
+      {% for member in team %}
+      <div class="col-10 col-sm-6 col-lg-3">
+        <div class="card-doctor">
+          <div class="header">
+            <img src="{{ member.photo.url }}" alt="{{ member.fullname }}">
+            {% if member.linkedin %}
+            <div class="meta">
+              <a href="{{ member.linkedin }}" target="_blank" rel="noopener"
+                aria-label="{{ member.fullname }} on LinkedIn">
+                <span class="bi bi-linkedin"></span>
+              </a>
+            </div>
+            {% endif %}
+          </div>
+          <div class="body">
+            <p class="text-xl mb-0">{{ member.fullname }}</p>
+            <span class="text-sm text-grey">{{ member.title }}</span>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+      <span class="control-btn next" aria-hidden="true"><i class="bi bi-chevron-right"></i></span>
+    </div>
+    <div class="text-center mt-4">
+      <a href="{% url 'website:doctors' %}" class="btn btn-outline-primary">
+        Meet the full team
+      </a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if posts %}
+<section class="page-section bg-light home-news">
+  <div class="container">
+    <div class="section-heading text-center">
+      <span class="sinel-eyebrow">Health information</span>
+      <h2>Latest from Sinel</h2>
+    </div>
+    <div class="row mt-4">
+      {% for post in posts %}
+      <div class="col-md-6 col-lg-4 py-2">
+        <article class="card-blog h-100">
+          <div class="header">
+            <div class="post-category">{{ post.tags }}</div>
+            <a href="{% url 'blog:post_detail' post.id %}" class="post-thumb">
+              <img src="{{ post.thumbnail.url }}" alt="{{ post.title }}">
+            </a>
+          </div>
+          <div class="body">
+            <h3 class="post-title">
+              <a href="{% url 'blog:post_detail' post.id %}">{{ post.title }}</a>
+            </h3>
+            <div class="site-info">
+              <span class="mai-time"></span>{{ post.created_at|naturaltime }}
+            </div>
+          </div>
+        </article>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-4">
+      <a href="{% url 'blog:posts' %}" class="btn btn-primary">Read more health news</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+
+{% block scriptblock %}
+<script src="{% static 'js/recognition_video.js' %}?v=20260729-2"></script>
+{% endblock %}

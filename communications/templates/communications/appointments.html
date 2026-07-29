@@ -1,0 +1,150 @@
+{% extends 'website/base_template.html' %}
+
+{% load static %}
+
+{% block home_active %}active{% endblock %}
+
+{% block styleblock %}
+<link rel="stylesheet" href="{% static 'css/appointment_booking.css' %}?v=20260729-1">
+{% endblock %}
+
+{% block content %}
+<section class="appointment-hero">
+  <div class="container">
+    <div class="appointment-hero-copy">
+      <span class="sinel-eyebrow">Plan your visit</span>
+      <h1>Request an appointment</h1>
+      <p>
+        Tell us when you would prefer to visit and what care you need.
+        Our team will contact you to confirm the appointment.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section id="request-appointment" class="appointment-section">
+  <div class="container">
+    <div class="row align-items-start">
+      <div class="col-lg-4 mb-4 mb-lg-0">
+        <aside class="appointment-guidance">
+          <span class="appointment-guidance-icon" aria-hidden="true">
+            <i class="bi bi-calendar2-check"></i>
+          </span>
+          <h2>A simple way to get started</h2>
+          <p>
+            Choose your preferred date and time in one field. A member of
+            the Sinel team will follow up to confirm availability.
+          </p>
+          <div class="appointment-emergency">
+            <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
+            <div>
+              <strong>Medical emergency?</strong>
+              <span>Come to the hospital immediately.</span>
+              <a href="{% url 'website:contact' %}">View our location</a>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="col-lg-8">
+        <div class="appointment-form-card">
+          <div class="appointment-form-heading">
+            <div>
+              <span class="sinel-eyebrow">Appointment details</span>
+              <h2>How can we help?</h2>
+            </div>
+            <span class="appointment-required"><span>*</span> Required</span>
+          </div>
+
+          {% if form.errors %}
+          <div class="alert alert-danger" role="alert">
+            <strong>Please check the highlighted information:</strong>
+            <ul class="mb-0 mt-2">
+              {% for field in form %}
+                {% for error in field.errors %}
+                <li>{{ field.label }}: {{ error }}</li>
+                {% endfor %}
+              {% endfor %}
+              {% for error in form.non_field_errors %}
+              <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+          <form action="{% url 'communications:book_appointment' %}" method="post">
+            {% csrf_token %}
+            <div class="row">
+              <div class="col-md-6 form-group">
+                <label for="fullname">Full name <span>*</span></label>
+                <input type="text" id="fullname" name="fullname" class="form-control"
+                  autocomplete="name" placeholder="Your full name"
+                  value="{{ form.fullname.value|default_if_none:'' }}" required>
+              </div>
+              <div class="col-md-6 form-group">
+                <label for="email">Email address</label>
+                <input type="email" id="email" name="email" class="form-control"
+                  autocomplete="email" placeholder="name@example.com"
+                  value="{{ form.email.value|default_if_none:'' }}">
+              </div>
+              <div class="col-md-6 form-group">
+                <label for="number">Phone number <span>*</span></label>
+                <input type="tel" id="number" name="number" class="form-control"
+                  autocomplete="tel" inputmode="tel" placeholder="+233..."
+                  value="{{ form.number.value|default_if_none:'' }}" required>
+              </div>
+              <div class="col-md-6 form-group">
+                <label for="date_of_birth">Date of birth</label>
+                <input type="date" id="date_of_birth" name="date_of_birth" class="form-control"
+                  autocomplete="bday"
+                  value="{{ form.date_of_birth.value|default_if_none:'' }}">
+              </div>
+              <div class="col-12 form-group">
+                <label for="{{ form.appointment_datetime.id_for_label }}">
+                  Preferred appointment date and time <span>*</span>
+                </label>
+                {{ form.appointment_datetime }}
+                <small class="form-text">
+                  Select both the date and time that work best for you.
+                </small>
+              </div>
+              <div class="col-12 form-group">
+                <label for="service">Desired service <span>*</span></label>
+                <select name="service" id="service" class="custom-select" required>
+                  <option value="">Choose a service</option>
+                  {% for service in services %}
+                  <option value="{{ service.title }}"
+                    {% if form.service.value == service.title %}selected{% endif %}>
+                    {{ service.title }}
+                  </option>
+                  {% endfor %}
+                  <option value="other"
+                    {% if form.service.value|lower == "other" %}selected{% endif %}>
+                    Other
+                  </option>
+                </select>
+              </div>
+              <div class="col-12 form-group">
+                <label for="message">How can we help? <span>*</span></label>
+                <textarea name="message" id="message" class="form-control" rows="5"
+                  placeholder="Briefly describe what you need help with."
+                  required>{{ form.message.value|default_if_none:'' }}</textarea>
+              </div>
+            </div>
+
+            <div class="appointment-form-footer">
+              <p>
+                <i class="bi bi-shield-check" aria-hidden="true"></i>
+                Your request is handled by the Sinel care team.
+              </p>
+              <button type="submit" class="btn btn-primary">
+                Send appointment request <i class="bi bi-arrow-right ml-2"></i>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

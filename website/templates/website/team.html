@@ -1,0 +1,217 @@
+{% extends 'website/base_template.html' %}
+{% load static %}
+
+{% block doctors_active %}active{% endblock %}
+
+{% block styleblock %}
+<link rel="stylesheet" href="{% static 'css/team_directory.css' %}?v=20260729-5">
+{% endblock %}
+
+{% block content %}
+<section class="team-hero">
+  <div class="team-hero-shape team-hero-shape--one" aria-hidden="true"></div>
+  <div class="team-hero-shape team-hero-shape--two" aria-hidden="true"></div>
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6 team-hero-copy">
+        <a class="team-breadcrumb" href="{% url 'website:index' %}">
+          <i class="bi bi-arrow-left" aria-hidden="true"></i>
+          Home
+        </a>
+        <span class="team-eyebrow">Our people</span>
+        <h1>People behind your care</h1>
+        <p>
+          Meet the clinical specialists, care teams and operational professionals
+          working together to make every Sinel experience safe, personal and dependable.
+        </p>
+        <div class="team-hero-actions">
+          <a href="#team-directory" class="btn btn-light btn-lg">
+            Meet the team
+            <i class="bi bi-arrow-down ml-2" aria-hidden="true"></i>
+          </a>
+          <a href="{% url 'communications:book_appointment' %}" class="btn btn-outline-light btn-lg">
+            Request an appointment
+          </a>
+        </div>
+        <div class="team-stats" aria-label="Team directory summary">
+          <div>
+            <strong>{{ doctors|length }}</strong>
+            <span>Team Members</span>
+          </div>
+          <div>
+            <strong>{{ specialities|length }}</strong>
+            <span>Specialit{{ specialities|length|pluralize:"y,ies" }} and department{{ specialities|length|pluralize }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="team-hero-portraits" aria-label="Sinel team portraits">
+          {% if hero_members %}
+            {% for member in hero_members %}
+            <figure class="team-hero-portrait team-hero-portrait--{{ forloop.counter }}">
+              <img src="{{ member.photo.url }}" alt="{{ member.fullname }}, {{ member.title }}">
+            </figure>
+            {% endfor %}
+          {% else %}
+          <div class="team-hero-fallback">
+            <img src="{% static 'img/bg_image_1.jpg' %}" alt="Sinel Hospital care team">
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="team-directory" id="team-directory" aria-labelledby="team-directory-title">
+  <div class="container">
+    <div class="team-directory-heading">
+      <div>
+        <span class="team-eyebrow">Team directory</span>
+        <h2 id="team-directory-title">Find the right person for your care</h2>
+        <p>
+          Search by name or narrow the directory by specialty and department.
+        </p>
+      </div>
+      {% if doctors %}
+      <span class="team-results-summary" aria-live="polite">
+        Showing <strong id="team-visible-count">{{ doctors|length }}</strong>
+        of {{ doctors|length }}
+      </span>
+      {% endif %}
+    </div>
+
+    {% if doctors %}
+    <div class="team-filters" role="search" aria-label="Filter the team directory">
+      <label class="team-search">
+        <span class="sr-only">Search team members</span>
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <input id="team-search-input" type="search" placeholder="Search by name or role">
+      </label>
+      <label class="team-specialty-filter">
+        <span class="sr-only">Filter by specialty or department</span>
+        <i class="bi bi-funnel" aria-hidden="true"></i>
+        <select id="team-specialty-select">
+          <option value="">All specialties and departments</option>
+          {% for speciality in specialities %}
+          <option value="{{ speciality }}">{{ speciality }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button class="team-clear-filters" id="team-clear-filters" type="button" hidden>
+        Clear filters
+      </button>
+    </div>
+
+    <div class="team-grid" id="team-grid">
+      {% for member in doctors %}
+      <article class="team-card"
+        data-team-card
+        data-team-name="{{ member.fullname }}"
+        data-team-specialty="{{ member.title }}">
+        <div class="team-card-photo">
+          <img src="{{ member.photo.url }}" alt="Portrait of {{ member.fullname }}" loading="lazy">
+          <span class="team-card-role">{{ member.title }}</span>
+          {% if member.public_linkedin_url %}
+          <a class="team-linkedin"
+            href="{{ member.public_linkedin_url }}"
+            target="_blank"
+            rel="noopener"
+            aria-label="View {{ member.fullname }} on LinkedIn">
+            <i class="bi bi-linkedin" aria-hidden="true"></i>
+          </a>
+          {% endif %}
+        </div>
+        <div class="team-card-body">
+          <h3>{{ member.fullname }}</h3>
+          <p class="team-card-specialty">{{ member.title }}</p>
+          {% if member.display_bio %}
+          <p class="team-card-bio">{{ member.display_bio|truncatewords:27 }}</p>
+          <button class="team-profile-button"
+            type="button"
+            data-team-profile
+            data-team-name="{{ member.fullname }}"
+            data-team-specialty="{{ member.title }}"
+            data-team-photo="{{ member.photo.url }}"
+            data-team-bio="{{ member.display_bio }}"
+            data-team-linkedin="{{ member.public_linkedin_url }}">
+            View profile
+            <i class="bi bi-arrow-up-right" aria-hidden="true"></i>
+          </button>
+          {% else %}
+          <p class="team-card-bio team-card-bio--quiet">
+            A valued member of Sinel's {{ member.title|lower }}.
+          </p>
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+
+    <div class="team-no-results" id="team-no-results" hidden>
+      <span><i class="bi bi-people" aria-hidden="true"></i></span>
+      <h3>No matching team members</h3>
+      <p>Try another name or choose a different specialty.</p>
+      <button class="btn btn-primary" id="team-no-results-clear" type="button">
+        Show the full team
+      </button>
+    </div>
+    {% else %}
+    <div class="team-empty">
+      <span><i class="bi bi-people" aria-hidden="true"></i></span>
+      <h2>Team profiles are being updated.</h2>
+      <p>Please contact the hospital if you need help finding a specialist.</p>
+      <a href="{% url 'website:contact' %}" class="btn btn-primary">Contact the hospital</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="team-cta">
+  <div class="container">
+    <div class="team-cta-card">
+      <div>
+        <span class="team-eyebrow">Coordinated care</span>
+        <h2>Not sure which specialist you need?</h2>
+        <p>Tell us what you need help with and our care team will guide you.</p>
+      </div>
+      <div class="team-cta-actions">
+        <a href="{% url 'communications:book_appointment' %}" class="btn btn-light btn-lg">
+          Request an appointment
+        </a>
+        <a href="tel:{{ request.contact.telephone }}" class="btn btn-outline-light btn-lg">
+          <i class="bi bi-telephone mr-2" aria-hidden="true"></i>
+          Call {{ request.contact.telephone }}
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<dialog class="team-profile-dialog" id="team-profile-dialog" aria-label="Team member profile">
+  <div class="team-profile-dialog__shell">
+    <form method="dialog" class="team-profile-dialog__close-form">
+      <button class="team-profile-dialog__close" aria-label="Close profile">
+        <i class="bi bi-x-lg" aria-hidden="true"></i>
+      </button>
+    </form>
+    <div class="team-profile-dialog__photo">
+      <img alt="">
+    </div>
+    <div class="team-profile-dialog__content">
+      <span class="team-eyebrow team-profile-dialog__specialty"></span>
+      <h2 class="team-profile-dialog__name"></h2>
+      <p class="team-profile-dialog__bio"></p>
+      <a class="team-profile-dialog__linkedin" href="#" target="_blank" rel="noopener" hidden>
+        <i class="bi bi-linkedin" aria-hidden="true"></i>
+        View LinkedIn profile
+      </a>
+    </div>
+  </div>
+</dialog>
+{% endblock %}
+
+{% block scriptblock %}
+<script src="{% static 'js/team_directory.js' %}?v=20260729"></script>
+{% endblock %}

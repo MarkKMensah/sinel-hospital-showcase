@@ -1,0 +1,267 @@
+:root {
+  --login-sky: #1fa9db;
+  --login-navy: #1f2f63;
+  --login-ink: #17213d;
+  --login-muted: #66718a;
+}
+
+.sinel-login-page {
+  min-height: 100vh;
+  margin: 0;
+  background: #f4f7fb;
+  color: var(--login-ink);
+}
+
+.sinel-login-shell {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: minmax(360px, 0.95fr) minmax(420px, 1.05fr);
+}
+
+.sinel-login-intro {
+  position: relative;
+  display: flex;
+  overflow: hidden;
+  padding: 3rem clamp(2rem, 6vw, 6rem);
+  background:
+    radial-gradient(circle at 10% 90%, rgba(31, 169, 219, 0.45), transparent 30%),
+    linear-gradient(145deg, #172453, #27437f);
+  color: white;
+  flex-direction: column;
+}
+
+.sinel-login-intro::after {
+  position: absolute;
+  top: -170px;
+  right: -170px;
+  width: 410px;
+  height: 410px;
+  border: 80px solid rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+  content: "";
+}
+
+.sinel-login-logo {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  width: max-content;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  background: white;
+}
+
+.sinel-login-logo img {
+  width: 150px;
+  height: auto;
+}
+
+.sinel-login-intro-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 650px;
+  margin: auto 0;
+}
+
+.sinel-login-eyebrow {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: var(--login-sky);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.sinel-login-intro .sinel-login-eyebrow {
+  color: #8bdcff;
+}
+
+.sinel-login-intro h1 {
+  color: white;
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.03;
+}
+
+.sinel-login-intro p {
+  max-width: 580px;
+  margin: 1.5rem 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.sinel-login-site-link {
+  position: relative;
+  z-index: 1;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.sinel-login-site-link:hover {
+  color: white;
+  text-decoration: none;
+}
+
+.sinel-login-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem clamp(1.5rem, 6vw, 6rem);
+  flex-direction: column;
+}
+
+.sinel-login-card {
+  width: 100%;
+  max-width: 520px;
+  padding: clamp(2rem, 5vw, 3.5rem);
+  border: 1px solid rgba(31, 47, 99, 0.08);
+  border-radius: 1.25rem;
+  background: white;
+  box-shadow: 0 24px 65px rgba(31, 47, 99, 0.12);
+}
+
+.sinel-login-lock {
+  display: inline-flex;
+  width: 50px;
+  height: 50px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  border-radius: 50%;
+  background: #eaf7fc;
+  color: var(--login-sky);
+  font-size: 1.2rem;
+}
+
+.sinel-login-card h2 {
+  margin-bottom: 0.5rem;
+  color: var(--login-ink);
+  font-size: 2.35rem;
+  font-weight: 700;
+}
+
+.sinel-login-help,
+.sinel-login-support {
+  color: var(--login-muted);
+}
+
+.sinel-login-help {
+  margin-bottom: 2rem;
+}
+
+.sinel-login-card label {
+  color: var(--login-ink);
+  font-weight: 600;
+}
+
+.sinel-login-input {
+  position: relative;
+}
+
+.sinel-login-input > i {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 1rem;
+  color: #8b94a9;
+  transform: translateY(-50%);
+}
+
+.sinel-login-input .form-control {
+  height: 52px;
+  padding-left: 2.9rem;
+  border: 1px solid #dce2ec;
+  border-radius: 0.7rem;
+}
+
+.sinel-login-input .form-control:focus {
+  border-color: var(--login-sky);
+  box-shadow: 0 0 0 0.2rem rgba(31, 169, 219, 0.16);
+}
+
+.sinel-login-card .btn-primary {
+  min-height: 52px;
+  border-color: var(--login-sky);
+  border-radius: 0.7rem;
+  background: var(--login-sky);
+  font-weight: 700;
+}
+
+.sinel-login-support {
+  margin: 1.5rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.sinel-login-copyright {
+  margin: 1.5rem 0 0;
+  color: #8b94a9;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 991.98px) {
+  .sinel-login-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sinel-login-intro {
+    min-height: 320px;
+    padding: 2rem;
+  }
+
+  .sinel-login-intro-copy {
+    margin: 3rem 0;
+  }
+
+  .sinel-login-intro h1 {
+    max-width: 700px;
+  }
+
+  .sinel-login-panel {
+    padding: 2rem 1rem 3rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .sinel-login-intro {
+    min-height: 0;
+    padding: 1.5rem;
+  }
+
+  .sinel-login-logo {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .sinel-login-logo img {
+    width: 112px;
+  }
+
+  .sinel-login-intro-copy {
+    margin: 1.5rem 0 1.25rem;
+  }
+
+  .sinel-login-intro h1 {
+    margin-bottom: 0;
+    font-size: 1.65rem;
+    line-height: 1.08;
+  }
+
+  .sinel-login-intro p {
+    display: none;
+  }
+
+  .sinel-login-site-link {
+    font-size: 0.85rem;
+  }
+
+  .sinel-login-panel {
+    padding-top: 1.5rem;
+  }
+
+  .sinel-login-card {
+    padding: 1.5rem;
+  }
+}

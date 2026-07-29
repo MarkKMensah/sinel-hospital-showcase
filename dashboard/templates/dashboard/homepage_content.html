@@ -1,0 +1,251 @@
+{% extends 'dashboard/base_template.html' %}
+{% block homepage-page-active %}mm-active{% endblock %}
+{% block pagetitle %}Homepage{% endblock %}
+
+{% load static %}
+
+{% block content %}
+<div class="app-main__inner">
+  <div class="app-page-title">
+    <div class="page-title-wrapper">
+      <div class="page-title-heading">
+        <div class="page-title-icon">
+          <i class="bi bi-window icon-gradient bg-tempting-azure"></i>
+        </div>
+        <div>
+          Homepage content
+          <div class="page-title-subheading">
+            Change the main banner and service shortcuts without editing website code.
+          </div>
+        </div>
+      </div>
+      <div class="page-title-actions">
+        <a class="btn-shadow btn btn-primary" href="{% url 'website:index' %}" target="_blank" rel="noopener">
+          <i class="bi bi-box-arrow-up-right mr-2"></i>Preview homepage
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-card mb-4 card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <strong>Hero banners</strong>
+        <small class="d-block text-muted">
+          The first visible banner by position is shown. When none is visible, the safe default banner remains.
+        </small>
+      </div>
+      <a class="btn btn-info" href="{% url 'dashboard:create_update_banner' %}">
+        <i class="bi bi-plus-lg mr-1"></i>Add banner
+      </a>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Position</th>
+              <th>Image</th>
+              <th>Banner</th>
+              <th>Button destination</th>
+              <th>Status</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for banner in banners %}
+            <tr>
+              <td>{{ banner.position }}</td>
+              <td>
+                {% if banner.image %}
+                <img src="{{ banner.image.url }}" alt="" width="88" height="52"
+                  style="object-fit: cover; border-radius: .4rem;">
+                {% endif %}
+              </td>
+              <td>
+                <strong>{{ banner.title }}</strong>
+                <small class="d-block text-muted">{{ banner.description|default:"No supporting text" }}</small>
+              </td>
+              <td>
+                {% if banner.service %}
+                {{ banner.service.title }}
+                {% elif banner.url %}
+                External link
+                {% else %}
+                Services page
+                {% endif %}
+              </td>
+              <td>
+                {% if banner.visible %}
+                <span class="badge badge-success">Visible</span>
+                {% else %}
+                <span class="badge badge-secondary">Hidden</span>
+                {% endif %}
+              </td>
+              <td class="text-right text-nowrap">
+                <a class="btn btn-link" href="{% url 'dashboard:create_update_banner' %}?banner_id={{ banner.id }}">
+                  <i class="bi bi-pencil mr-1"></i>Edit
+                </a>
+                <form class="d-inline confirm-action" method="post" action="{% url 'dashboard:delete_banner' %}"
+                  data-message="Remove this homepage banner?">
+                  {% csrf_token %}
+                  <input type="hidden" name="banner_id" value="{{ banner.id }}">
+                  <button class="btn btn-link text-danger" type="submit">
+                    <i class="bi bi-trash mr-1"></i>Remove
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted py-5">
+                No custom banner yet. The current default homepage banner is still active.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-card mb-3 card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <strong>Service shortcut buttons</strong>
+        <small class="d-block text-muted">
+          Add as many as needed. Position controls the order; hidden shortcuts remain saved but do not appear publicly.
+        </small>
+      </div>
+      <a class="btn btn-info" href="{% url 'dashboard:create_update_homepage_shortcut' %}">
+        <i class="bi bi-plus-lg mr-1"></i>Add shortcut
+      </a>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Position</th>
+              <th>Icon</th>
+              <th>Homepage label</th>
+              <th>Linked service</th>
+              <th>Ribbon</th>
+              <th>Status</th>
+              <th class="text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for shortcut in shortcuts %}
+            <tr>
+              <td>{{ shortcut.position }}</td>
+              <td>
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light"
+                  style="width: 44px; height: 44px;">
+                  <i class="bi bi-{{ shortcut.icon }} text-primary"></i>
+                </span>
+              </td>
+              <td>
+                <strong>{{ shortcut.display_label }}</strong>
+                <small class="d-block text-muted">{{ shortcut.display_description }}</small>
+              </td>
+              <td>{{ shortcut.service.title }}</td>
+              <td>
+                {% if shortcut.ribbon_text %}
+                <span class="badge badge-info">{{ shortcut.ribbon_text }}</span>
+                <small class="d-block text-muted">
+                  {{ shortcut.get_ribbon_position_display }}
+                </small>
+                {% else %}
+                <span class="text-muted">None</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if shortcut.visible and shortcut.service.visible %}
+                <span class="badge badge-success">Visible</span>
+                {% elif not shortcut.service.visible %}
+                <span class="badge badge-warning">Service hidden</span>
+                {% else %}
+                <span class="badge badge-secondary">Hidden</span>
+                {% endif %}
+              </td>
+              <td class="text-right text-nowrap">
+                <a class="btn btn-link"
+                  href="{% url 'dashboard:create_update_homepage_shortcut' %}?shortcut_id={{ shortcut.id }}">
+                  <i class="bi bi-pencil mr-1"></i>Edit
+                </a>
+                <form class="d-inline confirm-action" method="post"
+                  action="{% url 'dashboard:delete_homepage_shortcut' %}"
+                  data-message="Remove this homepage service shortcut?">
+                  {% csrf_token %}
+                  <input type="hidden" name="shortcut_id" value="{{ shortcut.id }}">
+                  <button class="btn btn-link text-danger" type="submit">
+                    <i class="bi bi-trash mr-1"></i>Remove
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center text-muted py-5">
+                No service shortcuts are configured.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-card mb-3 card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <strong>Hospital video</strong>
+        <small class="d-block text-muted">
+          A visitor-controlled video placed between the hospital story and partner showcase.
+        </small>
+      </div>
+      <a class="btn btn-info" href="{% url 'dashboard:create_update_homepage_video' %}">
+        <i class="bi bi-{% if homepage_video %}pencil{% else %}plus-lg{% endif %} mr-1"></i>
+        {% if homepage_video %}Edit video{% else %}Add video{% endif %}
+      </a>
+    </div>
+    <div class="card-body">
+      {% if homepage_video %}
+      <div class="row align-items-center">
+        <div class="col-md-4 mb-3 mb-md-0">
+          {% if homepage_video.display_poster_url %}
+          <img src="{{ homepage_video.display_poster_url }}" alt=""
+            style="width: 100%; max-height: 190px; object-fit: cover; border-radius: .75rem;">
+          {% endif %}
+        </div>
+        <div class="col-md-8">
+          <span class="badge badge-{% if homepage_video.visible %}success{% else %}secondary{% endif %} mb-2">
+            {% if homepage_video.visible %}Visible{% else %}Hidden{% endif %}
+          </span>
+          <h5>{{ homepage_video.title }}</h5>
+          <p class="text-muted mb-2">{{ homepage_video.description|default:"No introduction added." }}</p>
+          <a href="{{ homepage_video.youtube_url }}" target="_blank" rel="noopener">
+            View source video <i class="bi bi-box-arrow-up-right ml-1"></i>
+          </a>
+          <form class="confirm-action mt-3" method="post"
+            action="{% url 'dashboard:delete_homepage_video' %}"
+            data-message="Remove the homepage video?">
+            {% csrf_token %}
+            <input type="hidden" name="homepage_video_id" value="{{ homepage_video.id }}">
+            <button class="btn btn-outline-danger btn-sm" type="submit">
+              <i class="bi bi-trash mr-1"></i>Remove video
+            </button>
+          </form>
+        </div>
+      </div>
+      {% else %}
+      <div class="text-center text-muted py-4">
+        No homepage video is configured.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

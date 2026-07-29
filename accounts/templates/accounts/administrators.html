@@ -1,0 +1,96 @@
+{% extends 'dashboard/base_template.html' %}
+{% block administrators-page-active %}mm-active{% endblock %}
+{% block pagetitle %}Administrators{% endblock %}
+
+{% load static %}
+
+{%block content %}
+<div class="app-main__inner">
+    <div class="app-page-title">
+        <div class="page-title-wrapper">
+            <div class="page-title-heading">
+                <div class="page-title-icon">
+                    <i class="pe-7s-medal icon-gradient bg-tempting-azure"></i>
+                </div>
+                <div>
+                    Administrators
+                    <div class="page-title-subheading">
+                        Here is a list of users with administratrive privileges.
+                    </div>
+                </div>
+            </div>
+            <div class="page-title-actions">
+                <a href="{% url 'accounts:create_administrator' %}">
+                    <button type="button" aria-haspopup="true" aria-expanded="false" class="btn-shadow btn btn-info">
+                        <span class="btn-icon-wrapper pr-2 opacity-7">
+                            <i class="fa  bi bi-plus fa-w-20"></i>
+                        </span>
+                        New administrator
+                    </button>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="main-card mb-3 card">
+        <div class="card-body">
+            <table style="width: 100%" id="example" class="table table-hover table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>Photo</th>
+                        <th>Full Name</th>
+                        <th>Title</th>
+                        <th>Role</th>
+                        <th>Email</th>
+                        <th>Last Login</th>
+                        <th>Date Joined</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for administrator in administrators %}
+                    <tr>
+                        <td>
+                            {% if administrator.photo %}
+                            <img width="50" height="50" class="rounded-circle" src="{{administrator.photo.url}}"
+                                alt="{{administrator}}" style="border: 1px solid rgba(11, 221, 204, 0.616);">
+                            {% else %}
+                            <img width="50" height="50" class="rounded-circle" src="{% static 'img/logo_small.png' %}"
+                                alt="">
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'accounts:administrator_details' administrator.id %}">
+                                {{administrator}}
+                            </a>
+                        </td>
+                        <td>
+                            {{administrator.title}}
+                        </td>
+                        <td>
+                            {{ administrator.get_role_display }}
+                        </td>
+                        <td>
+                            {{administrator.email_address}}
+                        </td>
+                        <td>
+                            {{administrator.last_login_at}}
+                        </td>
+                        <td>
+                            {{administrator.created_at}}
+                        </td>
+                        <td>
+                            {% if administrator.is_active %}
+                            <p class="text text-success">Active</p>
+                            {% else %}
+                            <p class="text text-danger">Inactive</p>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

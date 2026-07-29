@@ -1,0 +1,53 @@
+{% extends 'website/base_template.html' %}
+{% load static %}
+
+{% block services_active %}active{% endblock %}
+
+{% block content %}
+<section class="services-hero">
+  <div class="container">
+    <span class="sinel-eyebrow">Comprehensive specialist care</span>
+    <h1>Healthcare services for every stage of life</h1>
+    <p>
+      Our experienced teams provide timely, coordinated care—from routine consultations
+      and diagnostics to specialist treatment and emergency support.
+    </p>
+    <a href="{% url 'communications:book_appointment' %}" class="btn btn-primary btn-lg">
+      Request an appointment
+    </a>
+  </div>
+</section>
+
+<section class="page-section service-directory" aria-labelledby="service-directory-title">
+  <div class="container">
+    <div class="section-heading text-center">
+      <span class="sinel-eyebrow">Explore our care</span>
+      <h2 id="service-directory-title">Our services</h2>
+      <p>Select a service for schedules, specialists and detailed care information.</p>
+    </div>
+    <div class="service-card-grid">
+      {% for service in services %}
+      <article class="service-card">
+        <a class="service-card-image" href="{% url 'website:service_details' service.id %}">
+          <img src="{{ service.image.url }}" alt="{{ service.title }}">
+        </a>
+        <div class="service-card-body">
+          <h3>
+            <a href="{% url 'website:service_details' service.id %}">{{ service.title }}</a>
+          </h3>
+          <p>{{ service.description|striptags|truncatewords:24 }}</p>
+          <a class="service-card-link" href="{% url 'website:service_details' service.id %}">
+            View service <i class="bi bi-arrow-right"></i>
+          </a>
+        </div>
+      </article>
+      {% empty %}
+      <div class="empty-state">
+        <h3>Service information is being updated.</h3>
+        <p>Please contact the hospital and our team will help you find the right care.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

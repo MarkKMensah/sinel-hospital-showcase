@@ -1,0 +1,153 @@
+{% extends 'website/base_template.html' %}
+
+{% load static %}
+
+{% block blog_active %}active{% endblock %}
+
+{% block styleblock %}
+<link rel="stylesheet" href="{% static 'css/blog_refresh.css' %}?v=20260729-1">
+{% endblock %}
+
+{% block content %}
+<section class="blog-hero">
+  <div class="container">
+    <nav aria-label="Breadcrumb">
+      <ol class="breadcrumb bg-transparent p-0 mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'website:index' %}">Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Sinel News</li>
+      </ol>
+    </nav>
+    <div class="blog-hero-grid">
+      <div>
+        <span class="sinel-eyebrow">Health, care and community</span>
+        <h1>Ideas for healthier lives</h1>
+        <p>
+          Hospital news, practical health guidance and stories from the
+          people shaping care at Sinel.
+        </p>
+      </div>
+      <form class="blog-search" method="get" action="{% url 'blog:posts' %}" role="search">
+        <label for="blog-search-input">Search Sinel News</label>
+        <div class="blog-search-control">
+          <i class="bi bi-search" aria-hidden="true"></i>
+          <input id="blog-search-input" name="q" type="search"
+            value="{{ query }}" placeholder="Search topics or stories">
+          <button type="submit">Search</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<main class="blog-index">
+  <div class="container">
+    {% if query %}
+    <div class="blog-results-heading">
+      <div>
+        <span class="sinel-eyebrow">Search results</span>
+        <h2>{{ result_count }} result{{ result_count|pluralize }} for “{{ query }}”</h2>
+      </div>
+      <a href="{% url 'blog:posts' %}" class="btn btn-outline-primary">Clear search</a>
+    </div>
+    {% endif %}
+
+    {% if featured_post %}
+    <article class="blog-featured">
+      <a class="blog-featured-image" href="{% url 'blog:post_detail' featured_post.id %}">
+        <img src="{{ featured_post.thumbnail.url }}" alt="">
+      </a>
+      <div class="blog-featured-copy">
+        <span class="blog-featured-label">Latest story</span>
+        <div class="blog-meta">
+          <span><i class="bi bi-calendar3"></i>{{ featured_post.created_at|date:"F j, Y" }}</span>
+          <span><i class="bi bi-clock"></i>{{ featured_post.reading_minutes }} min read</span>
+        </div>
+        <h2>
+          <a href="{% url 'blog:post_detail' featured_post.id %}">
+            {{ featured_post.title }}
+          </a>
+        </h2>
+        <p>{{ featured_post.excerpt }}</p>
+        <div class="blog-tags" aria-label="Topics">
+          {% for tag in featured_post.tag_list %}
+          <span>{{ tag }}</span>
+          {% endfor %}
+        </div>
+        <a href="{% url 'blog:post_detail' featured_post.id %}" class="blog-read-link">
+          Read the story <i class="bi bi-arrow-right"></i>
+        </a>
+      </div>
+    </article>
+    {% endif %}
+
+    {% if posts %}
+    <div class="blog-section-heading">
+      <div>
+        <span class="sinel-eyebrow">{% if query %}Matching stories{% else %}More from Sinel{% endif %}</span>
+        <h2>{% if query %}Explore the results{% else %}News and health guidance{% endif %}</h2>
+      </div>
+    </div>
+    <div class="blog-card-grid">
+      {% for post in posts %}
+      <article class="blog-card">
+        <a class="blog-card-image" href="{% url 'blog:post_detail' post.id %}">
+          <img src="{{ post.thumbnail.url }}" alt="">
+        </a>
+        <div class="blog-card-body">
+          <div class="blog-meta">
+            <span>{{ post.created_at|date:"M j, Y" }}</span>
+            <span>{{ post.reading_minutes }} min read</span>
+          </div>
+          <h3><a href="{% url 'blog:post_detail' post.id %}">{{ post.title }}</a></h3>
+          <p>{{ post.excerpt }}</p>
+          <div class="blog-card-footer">
+            <span>By {{ post.by }}</span>
+            <a href="{% url 'blog:post_detail' post.id %}" aria-label="Read {{ post.title }}">
+              Read <i class="bi bi-arrow-right"></i>
+            </a>
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% elif not featured_post %}
+    <div class="blog-empty">
+      <span><i class="bi bi-journal-medical"></i></span>
+      {% if query %}
+      <h2>No stories matched your search</h2>
+      <p>Try a broader health topic or browse all Sinel News.</p>
+      <a href="{% url 'blog:posts' %}" class="btn btn-primary">Browse all stories</a>
+      {% else %}
+      <h2>New stories are on the way</h2>
+      <p>Check back soon for hospital news and practical health guidance.</p>
+      <a href="{% url 'website:index' %}" class="btn btn-primary">Return home</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <nav class="blog-pagination" aria-label="Sinel News pages">
+      {% if page_obj.has_previous %}
+      <a href="?{% if query %}q={{ query|urlencode }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">
+        <i class="bi bi-arrow-left"></i> Previous
+      </a>
+      {% else %}
+      <span aria-disabled="true"><i class="bi bi-arrow-left"></i> Previous</span>
+      {% endif %}
+
+      <span class="blog-pagination-status">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+      </span>
+
+      {% if page_obj.has_next %}
+      <a href="?{% if query %}q={{ query|urlencode }}&amp;{% endif %}page={{ page_obj.next_page_number }}">
+        Next <i class="bi bi-arrow-right"></i>
+      </a>
+      {% else %}
+      <span aria-disabled="true">Next <i class="bi bi-arrow-right"></i></span>
+      {% endif %}
+    </nav>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends 'dashboard/base_template.html' %}
+{% block homepage-page-active %}mm-active{% endblock %}
+{% block pagetitle %}Homepage banner{% endblock %}
+
+{% block content %}
+<div class="app-main__inner">
+  <div class="app-page-title">
+    <div class="page-title-wrapper">
+      <div class="page-title-heading">
+        <div class="page-title-icon">
+          <i class="bi bi-image icon-gradient bg-tempting-azure"></i>
+        </div>
+        <div>
+          {% if banner %}Edit homepage banner{% else %}Add homepage banner{% endif %}
+          <div class="page-title-subheading">
+            Use a clear landscape image and short, useful message.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-card mb-3 card">
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% if banner %}
+        <input type="hidden" name="banner_id" value="{{ banner.id }}">
+        {% endif %}
+        {{ form.non_field_errors }}
+
+        <div class="form-row">
+          <div class="form-group col-md-8">
+            <label for="{{ form.title.id_for_label }}">Headline</label>
+            {{ form.title }}
+            {{ form.title.errors }}
+          </div>
+          <div class="form-group col-md-4">
+            <label for="{{ form.position.id_for_label }}">Position</label>
+            {{ form.position }}
+            <small class="form-text text-muted">{{ form.position.help_text }}</small>
+            {{ form.position.errors }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.description.id_for_label }}">Supporting text</label>
+          {{ form.description }}
+          {{ form.description.errors }}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.image.id_for_label }}">Banner image</label>
+          {% if banner and banner.image %}
+          <div class="mb-2">
+            <img src="{{ banner.image.url }}" alt="Current banner" style="max-width: 320px; border-radius: .5rem;">
+          </div>
+          {% endif %}
+          {{ form.image }}
+          {{ form.image.errors }}
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-md-4">
+            <label for="{{ form.button_label.id_for_label }}">Button label</label>
+            {{ form.button_label }}
+            {{ form.button_label.errors }}
+          </div>
+          <div class="form-group col-md-4">
+            <label for="{{ form.service.id_for_label }}">Link to a service</label>
+            {{ form.service }}
+            <small class="form-text text-muted">Recommended for an internal service page.</small>
+            {{ form.service.errors }}
+          </div>
+          <div class="form-group col-md-4">
+            <label for="{{ form.url.id_for_label }}">Or external URL</label>
+            {{ form.url }}
+            <small class="form-text text-muted">{{ form.url.help_text }}</small>
+            {{ form.url.errors }}
+          </div>
+        </div>
+
+        <div class="form-check mb-4">
+          {{ form.visible }}
+          <label class="form-check-label" for="{{ form.visible.id_for_label }}">Visible on the homepage</label>
+          {{ form.visible.errors }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check2 mr-1"></i>Save banner
+        </button>
+        <a href="{% url 'dashboard:homepage_content' %}" class="btn btn-light">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

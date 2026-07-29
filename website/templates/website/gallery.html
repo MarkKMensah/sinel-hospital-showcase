@@ -1,0 +1,152 @@
+{% extends 'website/base_template.html' %}
+
+{% load static %}
+
+{% block gallery_active %}active{% endblock %}
+
+{% block styleblock %}
+<link rel="stylesheet" href="{% static 'css/gallery_lightbox.css' %}?v=20260729-5">
+{% endblock %}
+
+{% block content %}
+{% with featured=media|first %}
+<section class="gallery-hero">
+  <div class="gallery-hero-shape gallery-hero-shape-one" aria-hidden="true"></div>
+  <div class="gallery-hero-shape gallery-hero-shape-two" aria-hidden="true"></div>
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-lg-6 py-4">
+        <a class="gallery-breadcrumb" href="{% url 'website:index' %}">
+          <i class="bi bi-arrow-left"></i> Home
+        </a>
+        <span class="gallery-eyebrow">Our Gallery</span>
+        <h1>Inside Sinel</h1>
+        <p>
+          Meet the people, facilities and everyday moments behind the
+          compassionate specialist care we provide.
+        </p>
+        <div class="gallery-hero-actions">
+          <a href="#gallery-collection" class="btn btn-light btn-lg">
+            Explore the gallery <i class="bi bi-arrow-down ml-2"></i>
+          </a>
+          <a href="{% url 'communications:book_appointment' %}" class="btn btn-outline-light btn-lg">
+            Request an appointment
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="gallery-hero-visual">
+          {% if featured %}
+          <img src="{{ featured.file.url }}" alt="{{ featured.display_name }}">
+          {% else %}
+          <img src="{% static 'img/bg_image_1.jpg' %}" alt="Sinel Hospital care team">
+          {% endif %}
+          <div class="gallery-hero-note">
+            <span class="gallery-hero-note-icon"><i class="bi bi-camera"></i></span>
+            <span>
+              {% if featured %}
+              <strong>{{ media|length }} captured moment{{ media|length|pluralize }}</strong>
+              <small>Our teams, facilities and patient-care environment</small>
+              {% else %}
+              <strong>Gallery updates coming soon</strong>
+              <small>New moments from across Sinel will appear here.</small>
+              {% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endwith %}
+
+<section class="gallery-collection" id="gallery-collection" aria-labelledby="gallery-title">
+  <div class="container">
+    <div class="gallery-collection-heading">
+      <div>
+        <span class="gallery-eyebrow">A closer look</span>
+        <h2 id="gallery-title">People and places at Sinel</h2>
+        <p>
+          Select any photograph to see it in a larger, distraction-free view.
+        </p>
+      </div>
+      {% if media %}
+      <span class="gallery-count">
+        <i class="bi bi-images"></i>
+        {{ media|length }} image{{ media|length|pluralize }}
+      </span>
+      {% endif %}
+    </div>
+
+    {% if media %}
+    <div class="gallery-grid">
+      {% for item in media %}
+      <a href="{{ item.file.url }}"
+        class="gallery-card work-box{% if forloop.first %} gallery-card--feature{% elif forloop.counter|divisibleby:'5' %} gallery-card--wide{% endif %}"
+        aria-label="View {{ item.display_name }}"
+        data-gallery-title="{{ item.display_name }}"
+        data-gallery-caption="{{ item.description|default:item.display_name }}">
+        <img src="{{ item.file.url }}" alt="{{ item.display_name }}"
+          {% if not forloop.first %}loading="lazy"{% endif %}>
+        <span class="gallery-card-overlay" aria-hidden="true"></span>
+        <span class="gallery-card-expand" aria-hidden="true">
+          <i class="bi bi-arrows-fullscreen"></i>
+        </span>
+        <span class="gallery-card-copy">
+          <span class="gallery-card-kicker">Sinel gallery</span>
+          <strong>{{ item.display_name }}</strong>
+          {% if item.description %}
+          <span>{{ item.description }}</span>
+          {% endif %}
+        </span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="gallery-empty">
+      <span><i class="bi bi-images"></i></span>
+      <h2>Gallery updates are on the way.</h2>
+      <p>Our team is preparing new photographs of Sinel Hospital.</p>
+      <a href="{% url 'website:contact' %}" class="btn btn-primary">Contact the hospital</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<dialog class="gallery-lightbox" id="gallery-lightbox" aria-label="Gallery image preview">
+  <div class="gallery-lightbox__shell">
+    <div class="gallery-lightbox__toolbar">
+      <span class="gallery-lightbox__brand">
+        <i class="bi bi-camera"></i> Sinel Gallery
+      </span>
+      <form method="dialog">
+        <button class="gallery-lightbox__close" aria-label="Close image preview">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </form>
+    </div>
+    <div class="gallery-lightbox__stage">
+      <button class="gallery-lightbox__nav gallery-lightbox__previous" type="button"
+        aria-label="View previous image">
+        <i class="bi bi-chevron-left"></i>
+      </button>
+      <img class="gallery-lightbox__image" alt="">
+      <button class="gallery-lightbox__nav gallery-lightbox__next" type="button"
+        aria-label="View next image">
+        <i class="bi bi-chevron-right"></i>
+      </button>
+    </div>
+    <div class="gallery-lightbox__footer">
+      <div>
+        <strong class="gallery-lightbox__title"></strong>
+        <p class="gallery-lightbox__caption" aria-live="polite"></p>
+      </div>
+      <span class="gallery-lightbox__counter"></span>
+    </div>
+  </div>
+</dialog>
+{% endblock %}
+
+{% block scriptblock %}
+<script src="{% static 'js/gallery_lightbox.js' %}?v=20260729-2"></script>
+{% endblock %}

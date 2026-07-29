@@ -1,0 +1,98 @@
+{% extends 'dashboard/base_template.html' %}
+{% block partners-page-active %}mm-active{% endblock %}
+{% block pagetitle %}Partners{% endblock %}
+
+{% load static %}
+
+{%block content %}
+<div class="app-main__inner">
+  <div class="app-page-title">
+    <div class="page-title-wrapper">
+      <div class="page-title-heading">
+        <div class="page-title-icon">
+          <i class="bi bi-award icon-gradient bg-tempting-azure"></i>
+        </div>
+        <div>
+          Partners
+          <div class="page-title-subheading">
+            Here, you can add the doctors of the team (i.e., doctors, nurses, etc.).
+          </div>
+        </div>
+      </div>
+      <div class="page-title-actions">
+        <a href="{% url 'dashboard:create_update_partner' %}">
+          <button type="button" aria-haspopup="true" aria-expanded="false" class="btn-shadow btn btn-info">
+            <span class="btn-icon-wrapper pr-2 opacity-7">
+              <i class="bi bi-plus"></i>
+            </span>
+            New Partner
+          </button>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="main-card mb-3 card">
+    <div class="card-body">
+      <table style="width: 100%" id="example" class="table table-hover table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>Actions</th>
+            <th>Logo</th>
+            <th>Name</th>
+            <th>Category</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for partner in partners %}
+          <tr>
+            <td>
+              <div class="d-flex">
+                <form action="{% url 'dashboard:delete_partner' %}" method="POST" class="confirm-action"
+                  data-message="Sure you want to delete?">
+                  {% csrf_token %}
+                  <input value={{partner.id}} name="partner_id" type="hidden">
+                  <button class="btn-link btn">
+                    <span class="text text-danger">
+                      <i class="bi bi-trash btn-icon-wrapper"> </i>Delete
+                    </span>
+                  </button>
+                </form>
+                <button class="btn-link btn">
+                  <a href="{% url 'dashboard:create_update_partner' %}?partner_id={{partner.id}}">
+                    <i class="bi bi-pencil"></i>
+                    Edit
+                  </a>
+                </button>
+              </div>
+            </td>
+            <td>
+              {% if partner.logo %}
+              <img width="50" height="50" class="rounded-circle" src="{{partner.logo.url}}" alt="{{partner}}"
+                style="border: 1px solid rgba(11, 221, 204, 0.616);">
+              {% else %}
+              <img width="50" height="50" class="rounded-circle" src="{% static 'img/logo_small.png' %}" alt="">
+              {% endif %}
+            </td>
+            <td>
+              {{partner.name}}
+            </td>
+            <td>
+              {{partner.category}}
+            </td>
+            <td>
+              {% if partner.visible %}
+              <p class="text text-success">Visible</p>
+              {% else %}
+              <p class="text text-danger">Not Visble</p>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

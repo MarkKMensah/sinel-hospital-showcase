@@ -1,0 +1,88 @@
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 260px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  padding: 12px 16px;
+  z-index: 19;
+}
+.dropdown-content a {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+  text-align: left;
+}
+.dropdown-content a:hover {
+  background-color: #f1f1f1;
+  text-decoration: none;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+table td th {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+table tr:hover {
+  background-color: #ddd;
+}
+
+.text-sinel {
+  color: #1fa9db;
+}
+
+blockquote {
+  padding: 6px 16px;
+  border: none;
+  quotes: '\201C''\201D';
+  display: inline-block;
+  position: relative;
+}
+
+blockquote:before {
+  content: open-quote;
+  font-weight: 800;
+  color: #1fa9db;
+  font-size: 1.6em;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+blockquote:after {
+  content: close-quote;
+  font-weight: 800;
+  color: #1fa9db;
+  font-size: 1.6em;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+}
+
+table th {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  text-align: left;
+  background-color: #1fa9db;
+  color: white;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  min-height: 100vh;
+}

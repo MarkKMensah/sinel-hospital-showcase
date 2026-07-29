@@ -1,0 +1,66 @@
+{% extends 'dashboard/base_template.html' %}
+{% block notifications-page-active %}mm-active{% endblock %}
+{% block pagetitle %}Notification{% endblock %}
+
+{%block content %}
+<div class="app-main__inner">
+    <div class="app-page-title">
+        <div class="page-title-wrapper">
+            <div class="page-title-heading">
+                <div class="page-title-icon">
+                    <i class="metismenu-icon bi bi-person-lines-fill"></i>
+                </div>
+                <div>
+                    Notifications
+                    <div class="page-title-subheading">Add multipe notifications here.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content">
+        <div class="row">
+            <div class="col-md-12 col-lg-12">
+                <div class="main-card mb-3 p-4 card">
+                    <form method="POST" enctype="multipart/form-data">
+
+                        {% csrf_token %}
+                        <input type="hidden" name="notification_id" value={{notification.id}}>
+
+                        <div class="form-group">
+                            <label for="title">Title</label>
+                            <input class="form-control" type="text" name="title" id="title"
+                                value="{{notification.title}}" placeholder="Title" required>
+                        </div>
+
+                        <label for="notification_content">Message</label>
+                        <textarea class="form-control" name="message" required>{{notification.message}}</textarea>
+
+                        <div class="form-group">
+                            <label for="url">URL</label>
+                            <input class="form-control" type="url" name="url" id="url" value="{{notification.url}}"
+                                placeholder="URL">
+                        </div>
+
+                        <div class="row form-group">
+                            <div class="col-md-6">
+                                <label for="available_at">Available At</label>
+                                <input class="form-control" type="datetime-local" name="available_at" id="available_at"
+                                    value="{{notification.available_at|date:'Y-m-d\TH:i'}}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="expires_at">Expires At</label>
+                                <input class="form-control" type="datetime-local" name="expires_at" id="expires_at"
+                                    value="{{notification.expires_at|date:'Y-m-d\TH:i'}}" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <button class="btn btn-primary mt-4" type="submit">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

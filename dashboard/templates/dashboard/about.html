@@ -1,0 +1,130 @@
+{% extends 'dashboard/base_template.html' %}
+{% block about-page-active %}mm-active{% endblock %}
+{% block headfiles %}{{ editor_media }}{% endblock %}
+
+{% block pagetitle %}About{% endblock %} {% block content %}
+
+<div class="app-main__inner">
+  <div class="app-page-title">
+    <div class="page-title-wrapper">
+      <div class="page-title-heading">
+        <div class="page-title-icon">
+          <i class="metismenu-icon bi bi-person-lines-fill"></i>
+        </div>
+        <div>
+          About
+          <div class="page-title-subheading">Easily modify these fiels to update the website.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  <ul class="body-tabs body-tabs-layout tabs-animated body-tabs-animated nav">
+    <li class="nav-item">
+      <a role="tab" class="nav-link {% if active_section == 'overview' %}active{% endif %}" id="tab-0"
+        data-toggle="tab" href="#tab-content-overview">
+        <span>Overview</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a role="tab" class="nav-link {% if active_section == 'mission' %}active{% endif %}" id="tab-1"
+        data-toggle="tab" href="#tab-content-mission">
+        <span>Mission</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a role="tab" class="nav-link {% if active_section == 'vision' %}active{% endif %}" id="tab-2"
+        data-toggle="tab" href="#tab-content-vision">
+        <span>Vision</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a role="tab" class="nav-link {% if active_section == 'value' %}active{% endif %}" id="tab-3"
+        data-toggle="tab" href="#tab-content-value">
+        <span>Value</span>
+      </a>
+    </li>
+  </ul>
+  <div class="tab-content">
+    <div class="tab-pane tabs-animation fade {% if active_section == 'overview' %}show active{% endif %}"
+      id="tab-content-overview" role="tabpanel">
+      <div class="row">
+        <div class="col-md-12 col-lg-12">
+          <div class="main-card mb-3 p-4 card">
+            <h1>Overview</h1>
+            <form method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="section" value="overview">
+              {{ overview_form.overview.errors }}
+              {{ overview_form.overview }}
+              <div class="form-group">
+                <button class="btn btn-primary mt-4" type="submit">Update</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane tabs-animation fade {% if active_section == 'mission' %}show active{% endif %}"
+      id="tab-content-mission" role="tabpanel">
+      <div class="row">
+        <div class="col-md-12 col-lg-12">
+          <div class="main-card mb-3 p-4 card">
+            <h1>Mission</h1>
+            <form method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="section" value="mission">
+              {{ mission_form.mission.errors }}
+              {{ mission_form.mission }}
+              <div class="form-group">
+                <button class="btn btn-primary mt-4" type="submit">Update</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane tabs-animation fade {% if active_section == 'vision' %}show active{% endif %}"
+      id="tab-content-vision" role="tabpanel">
+      <div class="row">
+        <div class="col-md-12 col-lg-12">
+          <div class="main-card mb-3 p-4 card">
+            <h1>Vision</h1>
+            <form method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="section" value="vision">
+              {{ vision_form.vision.errors }}
+              {{ vision_form.vision }}
+              <div class="form-group">
+                <button class="btn btn-primary mt-4" type="submit">Update</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane tabs-animation fade {% if active_section == 'value' %}show active{% endif %}"
+      id="tab-content-value" role="tabpanel">
+      <div class="row">
+        <div class="col-md-12 col-lg-12">
+          <div class="main-card mb-3 p-4 card">
+            <h1>Value</h1>
+            <form method="POST">
+              {% csrf_token %}
+              <input type="hidden" name="section" value="value">
+              {{ value_form.value.errors }}
+              {{ value_form.value }}
+              <div class="form-group">
+                <button class="btn btn-primary mt-4" type="submit">Update</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

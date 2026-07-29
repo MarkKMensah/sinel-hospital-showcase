@@ -1,0 +1,158 @@
+{% extends 'website/base_template.html' %}
+{% load static %}
+
+{% block partners_active %}active{% endblock %}
+
+{% block styleblock %}
+<link rel="stylesheet" href="{% static 'css/partner_showcase.css' %}?v=20260729-1">
+{% endblock %}
+
+{% block content %}
+<section class="partners-hero">
+  <div class="partners-hero-shape partners-hero-shape--one" aria-hidden="true"></div>
+  <div class="partners-hero-shape partners-hero-shape--two" aria-hidden="true"></div>
+  <div class="container">
+    <div class="partners-hero-layout">
+      <div class="partners-hero-copy">
+        <a class="partners-breadcrumb" href="{% url 'website:index' %}">
+          <i class="bi bi-arrow-left" aria-hidden="true"></i>
+          Home
+        </a>
+        <span class="partners-eyebrow">Our partner network</span>
+        <h1>Better health happens together</h1>
+        <p>
+          We work with insurers, businesses and community organisations to make
+          dependable healthcare more accessible for the people we serve.
+        </p>
+        <div class="partners-hero-actions">
+          <a href="#partner-directory" class="btn btn-light btn-lg">
+            Explore our network
+            <i class="bi bi-arrow-down ml-2" aria-hidden="true"></i>
+          </a>
+          <a href="{% url 'website:contact' %}" class="btn btn-outline-light btn-lg">
+            Talk to Sinel
+          </a>
+        </div>
+        <div class="partners-stats" aria-label="Partner network summary">
+          <div>
+            <strong>{{ partners|length }}</strong>
+            <span>Partner organisation{{ partners|length|pluralize }}</span>
+          </div>
+          <div>
+            <strong>{{ categories|length }}</strong>
+            <span>Partnership area{{ categories|length|pluralize }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="partners-hero-panel">
+        <div class="partners-hero-panel-heading">
+          <span>Trusted network</span>
+          <i class="bi bi-patch-check-fill" aria-hidden="true"></i>
+        </div>
+        {% if partners %}
+        <div class="partners-hero-logo-grid">
+          {% for partner in partners|slice:":6" %}
+          <div class="partners-hero-logo">
+            <img src="{{ partner.logo.url }}" alt="{{ partner.name }}">
+          </div>
+          {% endfor %}
+        </div>
+        <p>Supporting coordinated care, convenient access and healthier communities.</p>
+        {% else %}
+        <div class="partners-hero-empty" aria-hidden="true">
+          <i class="bi bi-people"></i>
+        </div>
+        <p>Our partner network is being updated.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="partner-directory" id="partner-directory" aria-labelledby="partner-directory-title">
+  <div class="container">
+    <div class="partner-directory-heading">
+      <span class="partners-eyebrow">Partner directory</span>
+      <h2 id="partner-directory-title">Organisations in our care network</h2>
+      <p>
+        Explore the organisations working with Sinel Hospital across healthcare
+        access, employee wellbeing and community support.
+      </p>
+    </div>
+
+    {% if partners %}
+      {% regroup partners by category as partner_groups %}
+      <div class="partner-groups">
+        {% for group in partner_groups %}
+        <section class="partner-group" aria-labelledby="partner-category-{{ forloop.counter }}">
+          <div class="partner-group-heading">
+            <div>
+              <span class="partner-group-number">{{ forloop.counter|stringformat:"02d" }}</span>
+              <h3 id="partner-category-{{ forloop.counter }}">{{ group.grouper }}</h3>
+            </div>
+            <span>{{ group.list|length }} organisation{{ group.list|length|pluralize }}</span>
+          </div>
+
+          <div class="partner-card-grid">
+            {% for partner in group.list %}
+            <article class="partner-card">
+              {% if partner.website %}
+              <a class="partner-card-logo" href="{{ partner.website }}" target="_blank" rel="noopener"
+                aria-label="Visit {{ partner.name }} website">
+                <img src="{{ partner.logo.url }}" alt="{{ partner.name }}">
+              </a>
+              {% else %}
+              <div class="partner-card-logo">
+                <img src="{{ partner.logo.url }}" alt="{{ partner.name }}">
+              </div>
+              {% endif %}
+
+              <div class="partner-card-body">
+                <span>{{ partner.category }}</span>
+                <h4>{{ partner.name }}</h4>
+                {% if partner.description %}
+                <p>{{ partner.description }}</p>
+                {% endif %}
+                {% if partner.website %}
+                <a href="{{ partner.website }}" target="_blank" rel="noopener">
+                  Visit website
+                  <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+                </a>
+                {% endif %}
+              </div>
+            </article>
+            {% endfor %}
+          </div>
+        </section>
+        {% endfor %}
+      </div>
+    {% else %}
+    <div class="partner-empty-state">
+      <span class="partner-empty-icon" aria-hidden="true">
+        <i class="bi bi-people"></i>
+      </span>
+      <h3>Our partner directory is being updated</h3>
+      <p>Please check back soon or contact us for current partnership information.</p>
+      <a href="{% url 'website:contact' %}" class="btn btn-primary">Contact Sinel</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="partner-cta">
+  <div class="container">
+    <div class="partner-cta-card">
+      <div>
+        <span class="partners-eyebrow">Work with Sinel</span>
+        <h2>Interested in becoming a partner?</h2>
+        <p>Let’s explore how we can improve access to trusted healthcare together.</p>
+      </div>
+      <a href="{% url 'website:contact' %}" class="btn btn-light btn-lg">
+        Start a conversation
+        <i class="bi bi-arrow-right ml-2" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}

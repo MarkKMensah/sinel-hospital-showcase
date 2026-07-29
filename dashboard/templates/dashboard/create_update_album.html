@@ -1,0 +1,43 @@
+{% extends 'dashboard/base_template.html' %}
+{% block gallery-page-active %}mm-active{% endblock %}
+{% block pagetitle %}Album{% endblock %}
+
+{% load static %}
+
+{%block content %}
+<div class="app-main__inner">
+  <div class="app-page-title">
+    <div class="page-title-wrapper">
+      <div class="page-title-heading">
+        <div class="page-title-icon">
+          <i class="bi bi-award icon-gradient bg-tempting-azure"></i>
+        </div>
+        <div>
+          Album
+          <div class="page-title-subheading">
+            Create an album to group related images.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="main-card mb-3 card">
+    <div class="card-body">
+      <form method="POST">
+        {% csrf_token %}
+        <input type="hidden" name="album_id" value={{album.id}}>
+
+        <div class="form-group">
+          <label for="name">What's the name of the album?</label>
+          <input class="form-control" type="text" name="name" id="name" value="{{album.name}}" placeholder="Name"
+            style="padding: 1.2em; border:none;background-color: rgba(197, 197, 197, 0.2); font-size: 2em;" required>
+        </div>
+        <div class="form-group">
+          <button class="btn btn-primary mt-4" type="submit">Submit</button>
+        </div>
+        <form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

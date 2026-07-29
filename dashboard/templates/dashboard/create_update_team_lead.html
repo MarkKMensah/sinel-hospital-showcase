@@ -1,0 +1,84 @@
+{% extends 'dashboard/base_template.html' %}
+{% block team-leads-page-active%}mm-active{% endblock %}
+{% block pagetitle %}Team Leads{% endblock %}
+
+{% load static %}
+
+{% block content %}
+<div class="app-main__inner">
+    <div class="app-page-title">
+        <div class="page-title-wrapper">
+            <div class="page-title-heading">
+                <div class="page-title-icon">
+                    <i class="bi bi-award icon-gradient bg-tempting-azure"></i>
+                </div>
+                <div>
+                    New Team Lead
+                    <div class="page-title-subheading">
+                        Add a new team lead that can access this dashboard.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="main-card mb-3 col-md-12 mx-auto card">
+        <div class="card-body col-md-8 mx-auto">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="team_lead_id" value={{team_lead.id}}>
+
+                <div class="form-group">
+                    <label for="fullname">Full Name</label>
+                    <input class="form-control" type="text" name="fullname" id="fullname" value="{{team_lead.fullname}}"
+                        placeholder="Full Name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="title">Speciality</label>
+                    <input class="form-control" type="text" name="title" id="title" value="{{team_lead.title}}"
+                        placeholder="Speciality" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="bio">Bio</label>
+                    <textarea class="form-control" name="bio" id="bio" rows="5">{{team_lead.bio}}</textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="linkedin">LinkedIn</label>
+                    <input class="form-control" type="url" name="linkedin" id="linkedin" value="{{team_lead.linkedin}}"
+                        placeholder="LinkedIn URL">
+                </div>
+
+                <div class="form-group my-3 py-3" style="background-color: rgba(197, 197, 197, 0.2);">
+                    <label class="font-weight-bold" for="photo">Photo</label>
+                    <div class="flex mb-3">
+                        <span class="mr-10 font-weight-bold">Currently:</span>
+                        {% if team_lead.photo %}
+                        <img width="100" height="100" src="{{team_lead.photo.url}}" alt="{{team_lead.title}}"
+                            style="border: 1px solid rgba(11, 221, 204, 0.616);">
+                        {% else %}
+                        <span class="text text-danger">None</span>
+                        {% endif %}
+                    </div>
+                    <input type="file" name="photo" id="photo" {% if not team_lead %}required{% endif %}
+                        class="form-control">
+                </div>
+
+                <div class="form-group mt-3">
+                    <p class="m-0 text text-warning">Invisible team leads will not show on the website.</p>
+                    <label class="font-weight-bold" for="is_active">Status</label>
+                    <input type="checkbox" name="visible" id="visible" {% if team_lead.visible %}checked{% endif %}
+                        data-toggle="toggle" data-on="Visible" data-off="Invisible" data-onstyle="success"
+                        data-offstyle="danger">
+                </div>
+
+                <div class="form-group">
+                    <button class="btn btn-primary mt-4" type="submit">Submit</button>
+                </div>
+                <form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

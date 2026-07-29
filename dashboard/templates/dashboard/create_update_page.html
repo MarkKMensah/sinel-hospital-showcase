@@ -1,0 +1,59 @@
+{% extends 'dashboard/base_template.html' %}
+{% block pages-page-active %}mm-active{% endblock %}
+{% block headfiles %}{{ form.media }}{% endblock %}
+{% block pagetitle %}Page{% endblock %}
+
+{%block content %}
+<div class="app-main__inner">
+    <div class="app-page-title">
+        <div class="page-title-wrapper">
+            <div class="page-title-heading">
+                <div class="page-title-icon">
+                    <i class="metismenu-icon bi bi-person-lines-fill"></i>
+                </div>
+                <div>
+                    Pages
+                    <div class="page-title-subheading">Design the static page as you wish. You can always update.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-content">
+        <div class="row">
+            <div class="col-md-12 col-lg-12">
+                <div class="main-card mb-3 p-4 card">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <input type="hidden" name="page_id" value={{page.id}}>
+
+                        <div class="form-group">
+                            <label for="title">Title</label>
+                            <input class="form-control" type="text" name="title" id="title" value="{{page.title}}"
+                                placeholder="Title" required>
+                        </div>
+
+                        <label for="{{ form.content.id_for_label }}">
+                            <h4>Content</h4>
+                        </label>
+                        {{ form.content.errors }}
+                        {{ form.content }}
+
+                        <div class="form-group mt-3">
+                            <p class="m-0 text text-warning">Invisible pages will not show on the website.</p>
+                            <label class="font-weight-bold" for="is_active">Status</label>
+                            <input type="checkbox" name="visible" id="visible" {% if page.visible %}checked{% endif %}
+                                data-toggle="toggle" data-on="Visible" data-off="Invisible" data-onstyle="success"
+                                data-offstyle="danger">
+                        </div>
+
+                        <div class="form-group">
+                            <button class="btn btn-primary mt-4" type="submit">Submit</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

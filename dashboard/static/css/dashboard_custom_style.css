@@ -1,0 +1,141 @@
+.ck.ck-editor {
+    max-width: 100%;
+}
+
+.ck.ck-toolbar {
+    border-radius: 0.25rem 0.25rem 0 0;
+}
+
+.ck.ck-toolbar > .ck-toolbar__items,
+.ck.ck-toolbar.ck-toolbar_grouping > .ck-toolbar__items {
+    flex-wrap: wrap;
+}
+
+.ck.ck-editor__editable_inline {
+    min-height: 20rem;
+}
+
+.app-header__logo .logo-src,
+.app-logo {
+  background-image: none !important;
+}
+
+.django-ckeditor-widget {
+    width: 100%;
+}
+
+.dashboard-messages {
+    padding: 1rem 1.75rem 0;
+}
+
+.dashboard-messages .alert {
+    box-shadow: 0 0.25rem 0.75rem rgba(31, 45, 61, 0.12);
+    margin-bottom: 0;
+}
+
+.appointment-filters label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    text-transform: uppercase;
+}
+
+.appointment-table th,
+.appointment-table td {
+    padding: 0.75rem;
+    vertical-align: middle;
+}
+
+.appointment-table {
+    min-width: 100%;
+    width: max-content !important;
+}
+
+.appointment-table .appointment-col-patient,
+.appointment-table .appointment-col-contact {
+    width: 1%;
+    white-space: nowrap;
+}
+
+.appointment-table .appointment-col-patient {
+    padding-right: 0.4rem;
+}
+
+.appointment-table .appointment-col-contact {
+    padding-left: 0.4rem;
+}
+
+.appointment-table td {
+    font-size: 0.82rem;
+}
+
+.appointment-table td small {
+    display: block;
+    margin-top: 0.2rem;
+}
+
+.appointment-status {
+    border-radius: 999px;
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.3rem 0.6rem;
+    white-space: nowrap;
+}
+
+.appointment-status-new {
+    background: #e7f1ff;
+    color: #145db2;
+}
+
+.appointment-status-contacted {
+    background: #fff3cd;
+    color: #7a5a00;
+}
+
+.appointment-status-confirmed {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.appointment-status-completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.appointment-status-cancelled,
+.appointment-status-no_show {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.appointment-details {
+    min-width: 5rem;
+    position: relative;
+}
+
+.appointment-details summary {
+    color: #1769aa;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.appointment-details-panel {
+    background: #fff;
+    border: 1px solid #d8dde5;
+    border-radius: 0.35rem;
+    box-shadow: 0 0.5rem 1.5rem rgba(31, 45, 61, 0.16);
+    min-width: 19rem;
+    padding: 1rem;
+    position: absolute;
+    right: 0;
+    top: 1.7rem;
+    z-index: 20;
+}
+
+@media (max-width: 767.98px) {
+    .appointment-details-panel {
+        left: 0;
+        right: auto;
+    }
+}

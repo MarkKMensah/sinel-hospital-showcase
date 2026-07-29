@@ -1,0 +1,81 @@
+{% extends 'dashboard/base_template.html' %}
+{% block team-leads-page-active%}mm-active{% endblock %}
+{% block pagetitle %}Testimonials{% endblock %}
+
+{% load static %}
+
+{% block content %}
+<div class="app-main__inner">
+    <div class="app-page-title">
+        <div class="page-title-wrapper">
+            <div class="page-title-heading">
+                <div class="page-title-icon">
+                    <i class="bi bi-award icon-gradient bg-tempting-azure"></i>
+                </div>
+                <div>
+                    New Testimonial
+                    <div class="page-title-subheading">
+                        Create a couple of testimon to display on the website.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="main-card mb-3 col-md-12 mx-auto card">
+        <div class="card-body col-md-8 mx-auto">
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="testimonial_id" value={{testimonial.id}}>
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input class="form-control" type="text" name="username" id="username"
+                        value="{{testimonial.username}}" placeholder="What's the name of the testifier?" required>
+                    <small class="text text-info">Max. character: 100</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="message">Message</label>
+                    <textarea class="form-control" name="message" id="message" placeholder="Enter testimony here."
+                        rows="5">{{testimonial.message}}</textarea>
+                </div>
+
+                <div class="form-group form-inline">
+                    <label for="service">Service </label>
+                    <select class="form-control" name="service" id="service" required>
+                        <option value="">Testimonial for which service?</option>
+                        {% for service in services %}
+                        <option value="{{service.id}}" {% if testimonial.service == service %}selected{% endif %}>
+                            {{service.title}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group form-inline">
+                    <label for="doctor">Doctor </label>
+                    <select class="form-control" name="doctor" id="doctor" required>
+                        <option value="">Testimonial for which doctor?</option>
+                        {% for doctor in doctors %}
+                        <option value="{{doctor.id}}" {% if testimonial.doctor == doctor %}selected{% endif %}>
+                            {{doctor.fullname}}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group mt-3">
+                    <p class="m-0 text text-warning">Invisible team leads will not show on the website.</p>
+                    <label class="font-weight-bold" for="is_active">Status</label>
+                    <input type="checkbox" name="visible" id="visible" {% if testimonial.visible %}checked{% endif %}
+                        data-toggle="toggle" data-on="Visible" data-off="Invisible" data-onstyle="success"
+                        data-offstyle="danger">
+                </div>
+
+                <div class="form-group">
+                    <button class="btn btn-primary mt-4" type="submit">Submit</button>
+                </div>
+                <form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

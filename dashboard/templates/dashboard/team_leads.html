@@ -1,0 +1,106 @@
+{% extends 'dashboard/base_template.html' %}
+{% block team-leads-page-active %}mm-active{% endblock %}
+{% block pagetitle %}Team Leads{% endblock %}
+
+{% load static %}
+
+{%block content %}
+<div class="app-main__inner">
+  <div class="app-page-title">
+    <div class="page-title-wrapper">
+      <div class="page-title-heading">
+        <div class="page-title-icon">
+          <i class="bi bi-award icon-gradient bg-tempting-azure"></i>
+        </div>
+        <div>
+          Team Leads
+          <div class="page-title-subheading">
+            Here, you can add more individuals to the team (i.e., doctors, nurses, etc.).
+          </div>
+        </div>
+      </div>
+      <div class="page-title-actions">
+        <a href="{% url 'dashboard:create_update_team_lead' %}">
+          <button type="button" aria-haspopup="true" aria-expanded="false" class="btn-shadow btn btn-info">
+            <span class="btn-icon-wrapper pr-2 opacity-7">
+              <i class="bi bi-plus"></i>
+            </span>
+            New Lead
+          </button>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="main-card mb-3 card">
+    <div class="card-body">
+      <table style="width: 100%" id="example" class="table table-hover table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>Actions</th>
+            <th>Photo</th>
+            <th>Full Name</th>
+            <th>Speciality</th>
+            <th>Bio</th>
+            <th>LinkedIn</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for team_lead in team_leads %}
+          <tr>
+            <td>
+              <div class="d-flex">
+                <form action="{% url 'dashboard:delete_team_lead' %}" method="POST" class="confirm-action"
+                  data-message="Sure you want to delete?">
+                  {% csrf_token %}
+                  <input value={{team_lead.id}} name="team_lead_id" type="hidden">
+                  <button class="btn-link btn">
+                    <span class="text text-danger">
+                      <i class="bi bi-trash btn-icon-wrapper"> </i>Delete
+                    </span>
+                  </button>
+                </form>
+                <button class="btn-link btn">
+                  <a href="{% url 'dashboard:create_update_team_lead' %}?team_lead_id={{team_lead.id}}">
+                    <i class="bi bi-pencil"></i>
+                    Edit
+                  </a>
+                </button>
+              </div>
+            </td>
+            <td>
+              {% if team_lead.photo %}
+              <img width="50" height="50" class="rounded-circle" src="{{team_lead.photo.url}}" alt="{{team_lead}}"
+                style="border: 1px solid rgba(11, 221, 204, 0.616);">
+              {% else %}
+              <img width="50" height="50" class="rounded-circle" src="{% static 'img/logo_small.png' %}" alt="">
+              {% endif %}
+            </td>
+            <td>
+              {{team_lead.fullname}}
+            </td>
+            <td>
+              {{team_lead.title}}
+            </td>
+            <td>
+              {{team_lead.bio}}
+            </td>
+            <td>
+              {{team_lead.linkedin}}
+            </td>
+            <td>
+              {% if team_lead.is_active %}
+              <p class="text text-success">Active</p>
+              {% else %}
+              <p class="text text-danger">Inactive</p>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

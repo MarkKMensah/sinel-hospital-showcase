@@ -1,0 +1,75 @@
+{% extends 'dashboard/base_template.html' %}
+{% block gallery-page-active %}mm-active{% endblock %}
+{% block pagetitle %}Album{% endblock %}
+
+{% load static %}
+
+{%block content %}
+<div class="app-main__inner">
+  <div class="app-page-title">
+    <div class="page-title-wrapper">
+      <div class="page-title-heading">
+        <div class="page-title-icon">
+          <i class="bi bi-award icon-gradient bg-tempting-azure"></i>
+        </div>
+        <div>
+          New Media
+          <div class="page-title-subheading">
+            An album can hold mulitple media. Create one below.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="main-card mb-3 card">
+    <div class="card-body">
+
+      <form class="col-md-6 mx-auto" method="post" enctype="multipart/form-data">
+        <input type="hidden" name="media_id" value="{{media.id}}">
+        {% csrf_token %}
+        <div class="form-group">
+          <label class="font-weight-bold" for="phot">File </label>
+          <div class="flex mb-3">
+            <span class="mr-10 font-weight-bold">Currently:</span>
+            {% if media.file %}
+            <span>{{media.file.url}}</span>
+            {% else %}
+            <span class="text text-danger">None</span>
+            {% endif %}
+          </div>
+          <input class="form-control" type="file" name="file" {% if not media %}required{% endif %}>
+        </div>
+
+        <label class="font-weight-bold" for="name">Name</label>
+        <input placeholder="Name" type="text" name="name" id="name" value="{{media.name}}"
+          class="mb-2 form-control-lg form-control" required>
+
+        <div class="form-group">
+          <label class="font-weight-bold" for="album">Album</label>
+          <select class="form-control" name="album" id="album" required>
+            <option value="">Choose album</option>
+            {% for album in albums %}
+            <option value="{{album.id}}" {% if album == media.album %}selected{% endif %}>{{album.name}}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="font-weight-bold" for="description">Description</label>
+          <textarea class="form-control" name="description" id="description" rows="10"
+            placeholder="Briefly describe this media" required>{{media.description}}</textarea>
+        </div>
+
+        <p class="m-0 text text-warning">Only visible media will show on the websites.</p>
+        <label class="font-weight-bold" for="is_active">Status</label>
+        <input type="checkbox" name="visible" id="visible" {% if media.visible %}checked{% endif %} data-toggle="toggle"
+          data-on="Visible" data-off="Not Visible" data-onstyle="success" data-offstyle="danger">
+        <div class="form-group mt-3">
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

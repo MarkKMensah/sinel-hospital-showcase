@@ -1,0 +1,120 @@
+{% extends 'dashboard/base_template.html' %}
+{% block homepage-page-active %}mm-active{% endblock %}
+{% block pagetitle %}Homepage shortcut{% endblock %}
+
+{% block content %}
+<div class="app-main__inner">
+  <div class="app-page-title">
+    <div class="page-title-wrapper">
+      <div class="page-title-heading">
+        <div class="page-title-icon">
+          <i class="bi bi-grid icon-gradient bg-tempting-azure"></i>
+        </div>
+        <div>
+          {% if shortcut %}Edit service shortcut{% else %}Add service shortcut{% endif %}
+          <div class="page-title-subheading">
+            Each shortcut opens its selected service page.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-card mb-3 card">
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        {% if shortcut %}
+        <input type="hidden" name="shortcut_id" value="{{ shortcut.id }}">
+        {% endif %}
+        {{ form.non_field_errors }}
+
+        <div class="form-row">
+          <div class="form-group col-md-8">
+            <label for="{{ form.service.id_for_label }}">Linked service</label>
+            {{ form.service }}
+            {{ form.service.errors }}
+          </div>
+          <div class="form-group col-md-4">
+            <label for="{{ form.position.id_for_label }}">Position</label>
+            {{ form.position }}
+            <small class="form-text text-muted">{{ form.position.help_text }}</small>
+            {{ form.position.errors }}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.label.id_for_label }}">Homepage label</label>
+          {{ form.label }}
+          <small class="form-text text-muted">{{ form.label.help_text }}</small>
+          {{ form.label.errors }}
+        </div>
+
+        <div class="form-group">
+          <label for="{{ form.description.id_for_label }}">Short description</label>
+          {{ form.description }}
+          <small class="form-text text-muted">{{ form.description.help_text }}</small>
+          {{ form.description.errors }}
+        </div>
+
+        <div class="form-row">
+          <div class="form-group col-md-6">
+            <label for="{{ form.icon.id_for_label }}">Icon</label>
+            {{ form.icon }}
+            {{ form.icon.errors }}
+          </div>
+          <div class="form-group col-md-6">
+            <label for="{{ form.accent.id_for_label }}">Accent colour</label>
+            {{ form.accent }}
+            {{ form.accent.errors }}
+          </div>
+        </div>
+
+        <div class="border rounded p-3 mb-4 bg-light">
+          <h5 class="mb-1">Optional promotional ribbon</h5>
+          <p class="text-muted mb-3">
+            Use a short ribbon to spotlight a new or priority service.
+            Leave the text blank to show the tile without a ribbon.
+          </p>
+          <div class="form-row">
+            <div class="form-group col-md-6">
+              <label for="{{ form.ribbon_text.id_for_label }}">Ribbon text</label>
+              {{ form.ribbon_text }}
+              <datalist id="shortcut-ribbon-presets">
+                <option value="New">
+                <option value="Featured">
+                <option value="Popular">
+                <option value="24/7">
+                <option value="Now available">
+              </datalist>
+              <small class="form-text text-muted">{{ form.ribbon_text.help_text }}</small>
+              {{ form.ribbon_text.errors }}
+            </div>
+            <div class="form-group col-md-3">
+              <label for="{{ form.ribbon_style.id_for_label }}">Ribbon colour</label>
+              {{ form.ribbon_style }}
+              {{ form.ribbon_style.errors }}
+            </div>
+            <div class="form-group col-md-3">
+              <label for="{{ form.ribbon_position.id_for_label }}">Corner</label>
+              {{ form.ribbon_position }}
+              {{ form.ribbon_position.errors }}
+            </div>
+          </div>
+        </div>
+
+        <div class="form-check mb-4">
+          {{ form.visible }}
+          <label class="form-check-label" for="{{ form.visible.id_for_label }}">Visible on the homepage</label>
+          {{ form.visible.errors }}
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-check2 mr-1"></i>Save shortcut
+        </button>
+        <a href="{% url 'dashboard:homepage_content' %}" class="btn btn-light">Cancel</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

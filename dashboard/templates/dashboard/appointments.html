@@ -1,0 +1,200 @@
+{% extends 'dashboard/base_template.html' %}
+{% block appointments-page-active %}mm-active{% endblock %}
+{% block pagetitle %}Appointments{% endblock %}
+
+{% block content %}
+<div class="app-main__inner">
+    <div class="app-page-title">
+        <div class="page-title-wrapper">
+            <div class="page-title-heading">
+                <div class="page-title-icon">
+                    <i class="bi bi-calendar-check icon-gradient bg-tempting-azure"></i>
+                </div>
+                <div>
+                    Appointments
+                    <div class="page-title-subheading">
+                        Newest requests appear first. Filter, follow up and export the current view.
+                    </div>
+                </div>
+            </div>
+            {% if request.user.can_manage_appointments %}
+            <div class="page-title-actions">
+                <a class="btn-shadow btn btn-success"
+                    href="{% url 'dashboard:appointments_export' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">
+                    <i class="bi bi-download mr-2"></i>Download CSV
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="main-card mb-3 card">
+        <div class="card-body">
+            <form method="get" class="appointment-filters">
+                <div class="form-row align-items-end">
+                    <div class="col-lg-3 col-md-6 mb-2">
+                        <label for="q">Search</label>
+                        <input id="q" name="q" class="form-control" value="{{ request.GET.q }}"
+                            placeholder="Name, phone, email or service">
+                    </div>
+                    <div class="col-lg-2 col-md-6 mb-2">
+                        <label for="status">Status</label>
+                        <select id="status" name="status" class="form-control">
+                            <option value="">All statuses</option>
+                            {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6 mb-2">
+                        <label for="service">Service</label>
+                        <select id="service" name="service" class="form-control">
+                            <option value="">All services</option>
+                            {% for service in service_choices %}
+                            <option value="{{ service }}" {% if request.GET.service == service %}selected{% endif %}>
+                                {{ service }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-6 mb-2">
+                        <label for="date_from">Booked from</label>
+                        <input type="date" id="date_from" name="date_from" class="form-control"
+                            value="{{ request.GET.date_from }}">
+                    </div>
+                    <div class="col-lg-2 col-md-6 mb-2">
+                        <label for="date_to">Booked to</label>
+                        <input type="date" id="date_to" name="date_to" class="form-control"
+                            value="{{ request.GET.date_to }}">
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-funnel mr-1"></i>Apply filters
+                    </button>
+                    <a href="{% url 'dashboard:appointments' %}" class="btn btn-light">Clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="main-card mb-3 card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table id="example" class="table table-hover appointment-table mb-0" data-order='[[0, "desc"]]'>
+                    <thead>
+                        <tr>
+                            <th>Booked</th>
+                            <th class="appointment-col-patient">Patient</th>
+                            <th class="appointment-col-contact">Contact</th>
+                            <th>Service</th>
+                            <th>Preferred</th>
+                            <th>Status</th>
+                            <th>Assigned</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in appointments %}
+                        <tr>
+                            <td data-order="{{ appointment.created_at|date:'U' }}">
+                                <strong>{{ appointment.created_at|date:"M j, Y" }}</strong>
+                                <small>{{ appointment.created_at|time:"H:i" }}</small>
+                            </td>
+                            <td class="appointment-col-patient">
+                                <strong>{{ appointment.fullname }}</strong>
+                                {% if appointment.date_of_birth %}
+                                <small>DOB: {{ appointment.date_of_birth|date:"M j, Y" }}</small>
+                                {% endif %}
+                            </td>
+                            <td class="appointment-col-contact">
+                                <a href="tel:{{ appointment.number }}">{{ appointment.number }}</a>
+                                {% if appointment.email %}
+                                <small><a href="mailto:{{ appointment.email }}">{{ appointment.email }}</a></small>
+                                {% endif %}
+                            </td>
+                            <td>{{ appointment.service }}</td>
+                            <td>
+                                {{ appointment.date|date:"M j, Y" }}
+                                <small>{{ appointment.time|time:"H:i" }}</small>
+                            </td>
+                            <td>
+                                <span class="appointment-status appointment-status-{{ appointment.status }}">
+                                    {{ appointment.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if appointment.assigned_to %}
+                                {{ appointment.assigned_to }}
+                                {% else %}
+                                <span class="text-muted">Unassigned</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <details class="appointment-details">
+                                    <summary>View</summary>
+                                    <div class="appointment-details-panel">
+                                        <p><strong>Patient message</strong></p>
+                                        <p>{{ appointment.message|linebreaksbr }}</p>
+                                        {% if request.user.can_manage_appointments %}
+                                        <form method="post"
+                                            action="{% url 'dashboard:appointment_update' appointment.id %}">
+                                            {% csrf_token %}
+                                            <div class="form-group">
+                                                <label for="status-{{ appointment.id }}">Status</label>
+                                                <select id="status-{{ appointment.id }}" name="status"
+                                                    class="form-control">
+                                                    {% for value, label in status_choices %}
+                                                    <option value="{{ value }}"
+                                                        {% if appointment.status == value %}selected{% endif %}>
+                                                        {{ label }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="assigned-{{ appointment.id }}">Assigned to</label>
+                                                <select id="assigned-{{ appointment.id }}" name="assigned_to"
+                                                    class="form-control">
+                                                    <option value="">Unassigned</option>
+                                                    {% for administrator in assignable_administrators %}
+                                                    <option value="{{ administrator.id }}"
+                                                        {% if appointment.assigned_to_id == administrator.id %}selected{% endif %}>
+                                                        {{ administrator }}
+                                                    </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="form-group">
+                                                <label for="notes-{{ appointment.id }}">Internal notes</label>
+                                                <textarea id="notes-{{ appointment.id }}" name="internal_notes"
+                                                    class="form-control" rows="3">{{ appointment.internal_notes }}</textarea>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary btn-sm">
+                                                Save update
+                                            </button>
+                                        </form>
+                                        {% elif appointment.internal_notes %}
+                                        <p><strong>Internal notes</strong></p>
+                                        <p>{{ appointment.internal_notes|linebreaksbr }}</p>
+                                        {% endif %}
+                                    </div>
+                                </details>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                No appointments match the selected filters.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

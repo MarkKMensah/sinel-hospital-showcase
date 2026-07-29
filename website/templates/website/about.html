@@ -1,0 +1,235 @@
+{% extends 'website/base_template.html' %}
+{% load static %}
+
+{% block about_active %}active{% endblock %}
+
+{% block styleblock %}
+<link rel="stylesheet" href="{% static 'css/about_contact.css' %}?v=20260729-1">
+<link rel="stylesheet" href="{% static 'css/recognition_video.css' %}?v=20260729-1">
+{% endblock %}
+
+{% block content %}
+<section class="about-hero">
+  <div class="about-hero-shape about-hero-shape--one" aria-hidden="true"></div>
+  <div class="about-hero-shape about-hero-shape--two" aria-hidden="true"></div>
+  <div class="container">
+    <div class="about-hero-layout">
+      <div class="about-hero-copy">
+        <a class="public-breadcrumb" href="{% url 'website:index' %}">
+          <i class="bi bi-arrow-left" aria-hidden="true"></i>
+          Home
+        </a>
+        <span class="public-page-eyebrow">About Us</span>
+        <h1>Care that has grown with generations</h1>
+        <p>
+          Sinel Specialist Hospital brings family-focused and specialist care
+          together under one roof—available whenever our community needs us.
+        </p>
+        <div class="public-hero-actions">
+          <a href="{% url 'website:services' %}" class="btn btn-light btn-lg">
+            Explore our services
+            <i class="bi bi-arrow-right ml-2" aria-hidden="true"></i>
+          </a>
+          <a href="{% url 'communications:book_appointment' %}" class="btn btn-outline-light btn-lg">
+            Request an appointment
+          </a>
+        </div>
+      </div>
+
+      <div class="about-hero-card" aria-label="Sinel Hospital at a glance">
+        <img src="{% static 'img/image.png' %}" alt="Sinel Specialist Hospital">
+        <div class="about-hero-card-grid">
+          <div>
+            <strong>40+</strong>
+            <span>Years serving families</span>
+          </div>
+          <div>
+            <strong>24/7</strong>
+            <span>Care availability</span>
+          </div>
+        </div>
+        <p>Personalised, professional healthcare.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="about-highlights" aria-label="Our approach to care">
+  <div class="container">
+    <div class="about-highlight-grid">
+      <article>
+        <span><i class="bi bi-people" aria-hidden="true"></i></span>
+        <div>
+          <h2>Family-centred</h2>
+          <p>Care designed around people, families and every stage of life.</p>
+        </div>
+      </article>
+      <article>
+        <span><i class="bi bi-heart-pulse" aria-hidden="true"></i></span>
+        <div>
+          <h2>Specialist access</h2>
+          <p>Experienced teams working together across a broad range of services.</p>
+        </div>
+      </article>
+      <article>
+        <span><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+        <div>
+          <h2>Always available</h2>
+          <p>Round-the-clock support, including weekends and public holidays.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+{% if about %}
+<section class="about-introduction" aria-labelledby="about-introduction-title">
+  <div class="container">
+    <div class="about-introduction-layout">
+      <div>
+        <span class="public-page-eyebrow">Welcome to Sinel</span>
+        <h2 id="about-introduction-title">Healthcare built around your wellbeing</h2>
+      </div>
+      <div class="about-cms-copy about-overview-copy">
+        {{ about.overview|safe }}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="about-principles" aria-labelledby="about-principles-title">
+  <div class="container">
+    <div class="about-principles-heading">
+      <span class="public-page-eyebrow">What guides us</span>
+      <h2 id="about-principles-title">Our story, focus and people</h2>
+      <p>The commitments shaping how we serve every patient and family.</p>
+    </div>
+
+    <div class="about-principles-grid">
+      <article class="about-principle about-principle--story">
+        <span class="about-principle-icon"><i class="bi bi-journal-heart" aria-hidden="true"></i></span>
+        <div class="about-cms-copy">{{ about.mission|safe }}</div>
+      </article>
+      <article class="about-principle">
+        <span class="about-principle-icon"><i class="bi bi-bullseye" aria-hidden="true"></i></span>
+        <div class="about-cms-copy">{{ about.vision|safe }}</div>
+      </article>
+      <article class="about-principle">
+        <span class="about-principle-icon"><i class="bi bi-people-fill" aria-hidden="true"></i></span>
+        <div class="about-cms-copy">{{ about.value|safe }}</div>
+      </article>
+    </div>
+  </div>
+</section>
+{% else %}
+<section class="about-introduction">
+  <div class="container">
+    <div class="public-content-empty">
+      <i class="bi bi-journal-medical" aria-hidden="true"></i>
+      <h2>Our story is being updated</h2>
+      <p>Please check back soon for more about Sinel Specialist Hospital.</p>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if awards %}
+<section class="recognition-section" aria-labelledby="recognition-title">
+  <div class="container">
+    <div class="recognition-heading">
+      <div>
+        <span class="public-page-eyebrow">Recognition</span>
+        <h2 id="recognition-title">Awards & Achievements</h2>
+        <p>
+          We are honoured to be recognised for our commitment to dependable,
+          compassionate healthcare.
+        </p>
+      </div>
+      <span class="recognition-count">
+        <i class="bi bi-award" aria-hidden="true"></i>
+        {{ awards|length }} recognition{{ awards|length|pluralize }}
+      </span>
+    </div>
+
+    <div class="recognition-grid">
+      {% for award in awards %}
+      <a class="recognition-card{% if forloop.first %} recognition-card--feature{% endif %}"
+        href="{{ award.display_image_url }}"
+        aria-label="View {{ award.public_title }}"
+        data-award-title="{{ award.public_title }}"
+        data-award-caption="{{ award.description|default:award.display_meta }}">
+        <img src="{{ award.display_image_url }}" alt="{{ award.public_title }}" loading="lazy">
+        <span class="recognition-card-overlay" aria-hidden="true"></span>
+        <span class="recognition-card-icon" aria-hidden="true">
+          <i class="bi bi-arrows-fullscreen"></i>
+        </span>
+        <span class="recognition-card-copy">
+          <span>Sinel recognition</span>
+          <strong>{{ award.public_title }}</strong>
+          {% if award.display_meta %}
+          <small>{{ award.display_meta }}</small>
+          {% endif %}
+        </span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<dialog class="recognition-lightbox" id="recognition-lightbox"
+  aria-label="Award and achievement image preview">
+  <div class="recognition-lightbox-shell">
+    <div class="recognition-lightbox-toolbar">
+      <span><i class="bi bi-trophy" aria-hidden="true"></i> Sinel Recognition</span>
+      <form method="dialog">
+        <button class="recognition-lightbox-close" aria-label="Close image preview">
+          <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+      </form>
+    </div>
+    <div class="recognition-lightbox-stage">
+      <button class="recognition-lightbox-nav recognition-lightbox-previous"
+        type="button" aria-label="View previous recognition">
+        <i class="bi bi-chevron-left" aria-hidden="true"></i>
+      </button>
+      <img class="recognition-lightbox-image" alt="">
+      <button class="recognition-lightbox-nav recognition-lightbox-next"
+        type="button" aria-label="View next recognition">
+        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div class="recognition-lightbox-footer">
+      <div>
+        <strong class="recognition-lightbox-title"></strong>
+        <p class="recognition-lightbox-caption" aria-live="polite"></p>
+      </div>
+      <span class="recognition-lightbox-counter"></span>
+    </div>
+  </div>
+</dialog>
+{% endif %}
+
+<section class="about-cta">
+  <div class="container">
+    <div class="about-cta-card">
+      <div>
+        <span class="public-page-eyebrow">Your health, our focus</span>
+        <h2>Let’s take the next step together</h2>
+        <p>Talk with our team about the care or specialist support you need.</p>
+      </div>
+      <div class="about-cta-actions">
+        <a href="{% url 'communications:book_appointment' %}" class="btn btn-light btn-lg">
+          Request an appointment
+        </a>
+        <a href="{% url 'website:contact' %}" class="btn btn-outline-light btn-lg">
+          Contact Sinel
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scriptblock %}
+<script src="{% static 'js/recognition_video.js' %}?v=20260729-2"></script>
+{% endblock %}

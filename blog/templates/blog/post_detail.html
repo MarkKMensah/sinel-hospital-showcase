@@ -1,0 +1,107 @@
+{% extends 'website/base_template.html' %}
+
+{% load static %}
+
+{% block blog_active %}active{% endblock %}
+
+{% block styleblock %}
+<link rel="stylesheet" href="{% static 'css/blog_refresh.css' %}?v=20260729-1">
+{% endblock %}
+
+{% block content %}
+<header class="blog-article-hero">
+  <div class="container">
+    <nav aria-label="Breadcrumb">
+      <ol class="breadcrumb bg-transparent p-0 mb-4">
+        <li class="breadcrumb-item"><a href="{% url 'website:index' %}">Home</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'blog:posts' %}">Sinel News</a></li>
+        <li class="breadcrumb-item active" aria-current="page">{{ post.title }}</li>
+      </ol>
+    </nav>
+    <div class="blog-article-heading">
+      <div class="blog-tags" aria-label="Topics">
+        {% for tag in post.tag_list %}
+        <span>{{ tag }}</span>
+        {% endfor %}
+      </div>
+      <h1>{{ post.title }}</h1>
+      <div class="blog-article-byline">
+        <span class="blog-author-mark" aria-hidden="true">
+          <i class="bi bi-person"></i>
+        </span>
+        <div>
+          <strong>{{ post.by }}</strong>
+          <span>
+            {{ post.created_at|date:"F j, Y" }}
+            <i aria-hidden="true">·</i>
+            {{ post.reading_minutes }} min read
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="blog-article-page">
+  <div class="container">
+    <article class="blog-article">
+      <figure class="blog-article-image">
+        <img src="{{ post.thumbnail.url }}" alt="">
+      </figure>
+      <div class="blog-article-content">
+        {{ post.content|safe }}
+      </div>
+      <footer class="blog-article-footer">
+        <div class="blog-tags" aria-label="Topics">
+          {% for tag in post.tag_list %}
+          <span>{{ tag }}</span>
+          {% endfor %}
+        </div>
+        <a href="{% url 'blog:posts' %}" class="blog-read-link">
+          <i class="bi bi-arrow-left"></i> Back to Sinel News
+        </a>
+      </footer>
+    </article>
+
+    {% if related_posts %}
+    <section class="blog-related" aria-labelledby="related-stories-title">
+      <div class="blog-section-heading">
+        <div>
+          <span class="sinel-eyebrow">Keep reading</span>
+          <h2 id="related-stories-title">More from Sinel</h2>
+        </div>
+        <a href="{% url 'blog:posts' %}" class="btn btn-outline-primary">View all stories</a>
+      </div>
+      <div class="blog-card-grid">
+        {% for related_post in related_posts %}
+        <article class="blog-card">
+          <a class="blog-card-image" href="{% url 'blog:post_detail' related_post.id %}">
+            <img src="{{ related_post.thumbnail.url }}" alt="">
+          </a>
+          <div class="blog-card-body">
+            <div class="blog-meta">
+              <span>{{ related_post.created_at|date:"M j, Y" }}</span>
+              <span>{{ related_post.reading_minutes }} min read</span>
+            </div>
+            <h3>
+              <a href="{% url 'blog:post_detail' related_post.id %}">
+                {{ related_post.title }}
+              </a>
+            </h3>
+            <p>{{ related_post.excerpt }}</p>
+            <div class="blog-card-footer">
+              <span>By {{ related_post.by }}</span>
+              <a href="{% url 'blog:post_detail' related_post.id %}"
+                aria-label="Read {{ related_post.title }}">
+                Read <i class="bi bi-arrow-right"></i>
+              </a>
+            </div>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  </div>
+</main>
+{% endblock %}

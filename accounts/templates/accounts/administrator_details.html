@@ -1,0 +1,108 @@
+{% extends 'dashboard/base_template.html' %} 
+{% block administrators-page-active %}mm-active{% endblock %} 
+{% block pagetitle %}Administrators{% endblock %}
+
+{% load static %}
+
+{%block content %}
+<div class="app-main__inner">
+  <div class="app-page-title">
+    <div class="page-title-wrapper">
+      <div class="page-title-heading">
+        <div class="page-title-icon">
+          <i class="pe-7s-medal icon-gradient bg-tempting-azure"></i>
+        </div>
+        <div>
+          {{administrator}}
+          <div class="page-title-subheading">
+            Update the details of {{administrator}},
+            <p class="m-0 text text-info">Please you cannot change the email address.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="main-card mb-3 card">
+    <div class="card-body">
+      <form class="col-md-6 mx-auto" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+
+        <h3>Update Info</h3>
+          <div class="form-group">
+            <label class="font-weight-bold" for="phot">Photo</label>
+            <div class="flex mb-3">
+              <span class="mr-10 font-weight-bold">Currently:</span>
+              {% if administrator.photo %}
+                <img width="100" height="100" class="rounded-circle" src="{{administrator.photo.url}}" alt="{{administrator}}" style="border: 1px solid rgba(11, 221, 204, 0.616);">
+              {% else %}
+                <span class="text text-danger">None</span>
+              {% endif %}
+            </div>
+            <input class="form-control" type="file" name="photo">
+          </div>
+
+          <label class="font-weight-bold" for="email_address">Email Address</label>
+          <input placeholder="Email Address" readonly type="email" value="{{administrator.email_address}}" class="mb-2 form-control-lg form-control">
+
+          <label class="font-weight-bold" for="fullname">Full Name</label>
+          <input placeholder="Full Name" type="text" name="fullname" id="fullname" value="{{administrator}}" class="mb-2 form-control-lg form-control">
+
+          <label class="font-weight-bold" for="title">Title</label>
+          <input placeholder="Title" type="text" name="title" id="title" value="{{administrator.title}}" class="mb-2 form-control-lg form-control">
+
+          <label class="font-weight-bold" for="role">Dashboard Role</label>
+          {% if administrator.is_superuser %}
+            <input type="text" class="mb-2 form-control-lg form-control"
+              value="{{ administrator.get_role_display }}" readonly>
+          {% else %}
+            <select name="role" id="role" class="mb-2 form-control-lg form-control">
+              {% for value, label in role_choices %}
+              <option value="{{ value }}" {% if administrator.role == value %}selected{% endif %}>
+                {{ label }}
+              </option>
+              {% endfor %}
+            </select>
+          {% endif %}
+          
+          {% if request.user != administrator or not request.user.is_superuser %}
+            <br>
+            <p class="m-0 text text-warning">Inactive users cannot access this dashboard.</p>
+            <label class="font-weight-bold" for="is_active">Status</label>
+            <input type="checkbox" name="is_active" id="is_active" {% if administrator.is_active %}checked{% endif %} data-toggle="toggle" data-on="Active" data-off="Inactive" data-onstyle="success" data-offstyle="danger">
+          {% endif %}
+          
+          <div class="form-group mt-3">
+            <button type="submit" class="btn btn-primary">Update</button>
+          </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="main-card mb-3 card">
+    <div class="card-body">
+      
+      <form class="col-md-6 mx-auto" action="{% url 'accounts:change_password' %}"  method="post">
+          {% csrf_token %}
+          <h3 class="text text-warning">Change Password</h3>  
+          <input type="hidden" name="admin_id" value="{{administrator.id}}" readonly>
+
+          <label class="font-weight-bold" for="current_password">Your Password</label>
+          <input placeholder="Password" type="password" name="current_password" id="current_password" class="mb-2 form-control-lg form-control">
+
+          
+          <div class="form-group mt-4">
+            <label class="font-weight-bold" for="password">New Password</label>
+            <input placeholder="Password" type="password" name="password" id="password" class="mb-2 form-control-lg form-control">
+          </div>
+
+          <label class="font-weight-bold" for="repeat_password">Repeat Password</label>
+          <input placeholder="Repeat Password" name="repeat_password" id="repeat_password" type="password" class="mb-2 form-control-lg form-control">
+
+          <div class="form-group mt-3">
+            <button type="submit" class="btn btn-primary">Change Password</button>
+          </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

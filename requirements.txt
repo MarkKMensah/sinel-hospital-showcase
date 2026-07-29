@@ -1,0 +1,8 @@
+Django==5.2.16
+django-cors-headers==4.9.0
+django-rest-knox==5.1.0
+djangorestframework==3.17.1
+gunicorn==26.0.0
+Pillow==12.3.0
+django-ckeditor-5==0.2.20
+psycopg2==2.9.12

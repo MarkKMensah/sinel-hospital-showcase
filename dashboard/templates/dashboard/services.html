@@ -1,0 +1,101 @@
+{% extends 'dashboard/base_template.html' %}
+{% block services-page-active %}mm-active{% endblock %}
+{% block pagetitle %}Services{% endblock %}
+
+{% load static %}
+
+{%block content %}
+<div class="app-main__inner">
+  <div class="app-page-title">
+    <div class="page-title-wrapper">
+      <div class="page-title-heading">
+        <div class="page-title-icon">
+          <i class="bi bi-award icon-gradient bg-tempting-azure"></i>
+        </div>
+        <div>
+          Services
+          <div class="page-title-subheading">
+            List of services offered by Sinel Specialist Hospital.
+          </div>
+        </div>
+      </div>
+      <div class="page-title-actions">
+
+        <a href="{% url 'dashboard:create_update_service' %}">
+          <button type="button" aria-haspopup="true" aria-expanded="false" class="btn-shadow btn btn-info">
+            <span class="btn-icon-wrapper pr-2 opacity-7">
+              <i class="bi bi-plus"></i>
+            </span>
+            New Service
+          </button>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="main-card mb-3 card">
+    <div class="card-body">
+      <table style="width: 100%" id="example" class="table table-hover table-striped table-bordered">
+        <thead>
+          <tr>
+            <th>Actions</th>
+            <th>Image</th>
+            <th>Title</th>
+            <th>Updated At</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for service in services %}
+          <tr>
+            <td>
+              <div class="d-flex">
+                <form action="{% url 'dashboard:delete_service' %}" method="POST" class="confirm-action"
+                  data-message="Sure you want to delete?">
+                  {% csrf_token %}
+                  <input value={{service.id}} name="service_id" type="hidden">
+                  <button class="btn-link btn">
+                    <span class="text text-danger">
+                      <i class="bi bi-trash btn-icon-wrapper"> </i>Delete
+                    </span>
+                  </button>
+                </form>
+                <button class="btn-link btn">
+                  <a href="{% url 'dashboard:create_update_service'%}?service_id={{service.id}}">
+                    <i class="bi bi-pencil"></i>
+                    Edit
+                  </a>
+                </button>
+              </div>
+            </td>
+            <td>
+              {% if service.image %}
+              <img height="50" src="{{service.image.url}}" alt="{{service.title}}"
+                style="border: 1px solid rgba(11, 221, 204, 0.616);">
+              {% else %}
+              <img height="50" src="{% static 'img/logo_small.png' %}" alt="">
+              {% endif %}
+            </td>
+            <td>
+              <a href="">
+                {{service.title}}
+              </a>
+            </td>
+            <td>
+              {{service.created_at}}
+            </td>
+            <td>
+              {% if service.visible %}
+              <p class="text text-success">Visible</p>
+              {% else %}
+              <p class="text text-danger">Not Visble</p>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

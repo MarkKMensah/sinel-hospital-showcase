@@ -1,0 +1,153 @@
+{% extends 'website/base_template.html' %}
+{% load static %}
+
+{% block contact_active %}active{% endblock %}
+
+{% block styleblock %}
+<link rel="stylesheet" href="{% static 'css/about_contact.css' %}?v=20260729-1">
+{% endblock %}
+
+{% block content %}
+<section class="contact-hero">
+  <div class="contact-hero-shape contact-hero-shape--one" aria-hidden="true"></div>
+  <div class="contact-hero-shape contact-hero-shape--two" aria-hidden="true"></div>
+  <div class="container">
+    <div class="contact-hero-layout">
+      <div class="contact-hero-copy">
+        <a class="public-breadcrumb" href="{% url 'website:index' %}">
+          <i class="bi bi-arrow-left" aria-hidden="true"></i>
+          Home
+        </a>
+        <span class="public-page-eyebrow">Contact Sinel</span>
+        <h1>Care is close at hand</h1>
+        <p>
+          Our hospital operates around the clock, every day of the year.
+          Call, message or visit us whenever you need support.
+        </p>
+        <div class="public-hero-actions">
+          <a href="tel:{{ request.contact.telephone }}" class="btn btn-light btn-lg">
+            <i class="bi bi-telephone-fill mr-2" aria-hidden="true"></i>
+            Call now
+          </a>
+          <a href="{% url 'communications:book_appointment' %}" class="btn btn-outline-light btn-lg">
+            Request an appointment
+          </a>
+        </div>
+      </div>
+
+      <aside class="contact-availability-card">
+        <span class="contact-availability-icon">
+          <i class="bi bi-clock-fill" aria-hidden="true"></i>
+        </span>
+        <span>Open every day</span>
+        <strong>24 hours</strong>
+        <p>Including weekends and public holidays.</p>
+        <a href="https://api.whatsapp.com/send?phone={{ request.contact.telephone }}"
+          target="_blank" rel="noopener">
+          <i class="bi bi-whatsapp" aria-hidden="true"></i>
+          Message us on WhatsApp
+        </a>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<section class="contact-options" aria-labelledby="contact-options-title">
+  <div class="container">
+    <div class="contact-options-heading">
+      <span class="public-page-eyebrow">Reach our team</span>
+      <h2 id="contact-options-title">Choose what works for you</h2>
+      <p>Direct access to the hospital team, wherever you are.</p>
+    </div>
+
+    <div class="contact-option-grid">
+      <a class="contact-option-card" href="tel:{{ request.contact.telephone }}">
+        <span><i class="bi bi-telephone" aria-hidden="true"></i></span>
+        <small>Call the hospital</small>
+        <strong>{{ request.contact.telephone }}</strong>
+        <em>Tap to call <i class="bi bi-arrow-right" aria-hidden="true"></i></em>
+      </a>
+      <a class="contact-option-card" href="mailto:{{ request.contact.email }}">
+        <span><i class="bi bi-envelope" aria-hidden="true"></i></span>
+        <small>Email our team</small>
+        <strong>{{ request.contact.email }}</strong>
+        <em>Write to us <i class="bi bi-arrow-right" aria-hidden="true"></i></em>
+      </a>
+      <a class="contact-option-card contact-option-card--whatsapp"
+        href="https://api.whatsapp.com/send?phone={{ request.contact.telephone }}"
+        target="_blank" rel="noopener">
+        <span><i class="bi bi-whatsapp" aria-hidden="true"></i></span>
+        <small>WhatsApp</small>
+        <strong>Chat with Sinel</strong>
+        <em>Start a conversation <i class="bi bi-arrow-right" aria-hidden="true"></i></em>
+      </a>
+      <div class="contact-option-card">
+        <span><i class="bi bi-geo-alt" aria-hidden="true"></i></span>
+        <small>Digital address</small>
+        <strong>{{ request.contact.gps }}</strong>
+        <em>Tema, Ghana</em>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="contact-location" aria-labelledby="contact-location-title">
+  <div class="container">
+    <div class="contact-location-layout">
+      <div class="contact-location-copy">
+        <span class="public-page-eyebrow">Visit the hospital</span>
+        <h2 id="contact-location-title">Find us in Tema</h2>
+        <p>{{ request.contact.address }}</p>
+
+        <div class="contact-location-detail">
+          <span><i class="bi bi-signpost-2" aria-hidden="true"></i></span>
+          <div>
+            <small>GPS address</small>
+            <strong>{{ request.contact.gps }}</strong>
+          </div>
+        </div>
+        <div class="contact-location-detail">
+          <span><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+          <div>
+            <small>Hospital access</small>
+            <strong>Open 24 hours, every day</strong>
+          </div>
+        </div>
+
+        <a class="btn btn-primary btn-lg"
+          href="https://www.google.com/maps/search/?api=1&query=Sinel+Hospital+Tema"
+          target="_blank" rel="noopener">
+          Open in Google Maps
+          <i class="bi bi-box-arrow-up-right ml-2" aria-hidden="true"></i>
+        </a>
+      </div>
+
+      <div class="contact-map">
+        <iframe
+          title="Map showing Sinel Specialist Hospital in Tema"
+          src="https://maps.google.com/maps?q=Sinel%20Hospital%20Tema&t=&z=14&ie=UTF8&iwloc=&output=embed"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          allowfullscreen>
+        </iframe>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="contact-appointment">
+  <div class="container">
+    <div class="contact-appointment-card">
+      <div>
+        <span class="public-page-eyebrow">Planning your visit?</span>
+        <h2>Save time by requesting an appointment</h2>
+        <p>Share a few details and our team will help coordinate the next step.</p>
+      </div>
+      <a href="{% url 'communications:book_appointment' %}" class="btn btn-light btn-lg">
+        Request an appointment
+        <i class="bi bi-arrow-right ml-2" aria-hidden="true"></i>
+      </a>
+    </div>
+  </div>
+</section>
+{% endblock %}
