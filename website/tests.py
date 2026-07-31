@@ -266,6 +266,8 @@ class TestViews(TestCase):
         response = self.client.get(reverse("website:index"))
 
         self.assertContains(response, "The New Sinel")
+        self.assertContains(response, "<span>Services</span>", html=True)
+        self.assertNotContains(response, "Published services")
         self.assertContains(
             response,
             "https://www.youtube.com/embed/ZBcjm8dh1T4",
