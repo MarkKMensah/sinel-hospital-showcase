@@ -2,6 +2,11 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.shortcuts import reverse
 from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from io import BytesIO
+from PIL import Image
+
+from .forms import BannerForm
 
 from .models import (
     Album,
@@ -18,14 +23,13 @@ from .models import (
 
 
 class TestViews(TestCase):
-
     def test_index_view_renders(self):
         url = reverse("website:index")
         resp = self.client.get(url)
 
         self.assertEqual(resp.status_code, 200)
         self.assertTemplateUsed(resp, "website/index.html")
-        self.assertContains(resp, "Better Healthcare")
+        self.assertContains(resp, "Sinel Hospital")
 
     def test_public_layout_includes_persistent_contact_actions(self):
         response = self.client.get(reverse("website:index"))
@@ -69,7 +73,7 @@ class TestViews(TestCase):
         self.assertNotContains(response, "Internal Draft Service")
         self.assertLess(content.index("Antenatal Care"), content.index("Zebra Care"))
 
-    def test_homepage_uses_first_visible_banner_and_ordered_shortcuts(self):
+    def test_homepage_uses_all_visible_banners_and_ordered_shortcuts(self):
         service = Service.objects.create(
             title="Primary Care",
             description="<p>Care for everyday health needs.</p>",
@@ -92,6 +96,7 @@ class TestViews(TestCase):
         )
         Banner.objects.create(
             title="Care close to home",
+            eyebrow="Care for everyone",
             description="Trusted family healthcare in Tema.",
             button_label="See primary care",
             service=service,
@@ -116,13 +121,78 @@ class TestViews(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Care close to home")
-        self.assertNotContains(response, "Later banner")
-        self.assertContains(response, "See primary care")
+        self.assertContains(response, "Later banner")
+        self.assertContains(response, "Care for everyone")
+        self.assertContains(response, "Explore our services")
+        self.assertNotContains(response, "See primary care")
+        self.assertContains(
+            response,
+            f'href="{reverse("website:service_details", args=[service.pk])}"',
+        )
         content = response.content.decode()
+        self.assertLess(
+            content.index("Care close to home"), content.index("Later banner")
+        )
         self.assertLess(
             content.index("General Medicine"),
             content.index("24 Hour Pharmacy"),
         )
+
+    def test_banner_visibility_and_empty_copy_follow_dashboard_records(self):
+        banner = Banner.objects.create(
+            title="Custom headline\nSecond line",
+            eyebrow="Custom small heading",
+            description="",
+            image="uploads/images/missing.jpg",
+            visible=True,
+        )
+        Banner.objects.create(
+            title="Unpublished banner",
+            image="uploads/images/hidden.jpg",
+            visible=False,
+        )
+        response = self.client.get(reverse("website:index"))
+        self.assertContains(response, "Custom headline\nSecond line")
+        self.assertContains(response, "Custom small heading")
+        self.assertNotContains(response, "Unpublished banner")
+        self.assertNotContains(response, "Trusted, compassionate care for every stage")
+        self.assertNotContains(response, "Specialist family care in Tema")
+        self.assertNotContains(response, "data-hero-next")
+        self.assertEqual(banner.display_image_url, "")
+        banner.visible = False
+        banner.save(update_fields=["visible"])
+        response = self.client.get(reverse("website:index"))
+        self.assertNotContains(response, "Custom headline")
+        self.assertContains(response, "sinel-hero-default")
+        self.assertContains(response, "Explore our services")
+
+    def test_banner_duplicate_positions_have_stable_order_after_edits(self):
+        first = Banner.objects.create(
+            title="First added banner", image="first.jpg", position=0, visible=True
+        )
+        second = Banner.objects.create(
+            title="Second added banner", image="second.jpg", position=0, visible=True
+        )
+        first.save()
+        response = self.client.get(reverse("website:index"))
+        self.assertEqual(list(response.context["heroes"]), [first, second])
+
+    def test_banner_links_respect_service_visibility_and_reject_unsafe_legacy_urls(
+        self,
+    ):
+        service = Service.objects.create(
+            title="Care", description="Care", image="care.jpg", visible=True
+        )
+        banner = Banner(service=service, url="https://example.com/care")
+        self.assertEqual(
+            banner.button_url, reverse("website:service_details", args=[service.pk])
+        )
+        service.visible = False
+        self.assertEqual(banner.button_url, "https://example.com/care")
+        banner.service = None
+        for url in ("javascript:alert(1)", "ftp://example.com/care", "bad-link"):
+            banner.url = url
+            self.assertEqual(banner.button_url, reverse("website:services"))
 
     def test_homepage_hides_shortcuts_for_hidden_services(self):
         hidden_service = Service.objects.create(
@@ -167,7 +237,7 @@ class TestViews(TestCase):
             response,
             (
                 '<span class="home-shortcut-ribbon '
-                'home-shortcut-ribbon-left '
+                "home-shortcut-ribbon-left "
                 'home-shortcut-ribbon-red">New</span>'
             ),
             html=True,
@@ -518,14 +588,59 @@ class TestViews(TestCase):
 
     def test_testimonial_rotation_never_scrolls_the_page_viewport(self):
         script_path = (
-            settings.BASE_DIR
-            / "website"
-            / "static"
-            / "js"
-            / "testimonial_carousel.js"
+            settings.BASE_DIR / "website" / "static" / "js" / "testimonial_carousel.js"
         )
         script = script_path.read_text(encoding="utf-8")
 
         self.assertNotIn("scrollIntoView", script)
         self.assertIn("carousel.scrollTo", script)
         self.assertIn("carousel.scrollBy", script)
+
+
+class BannerValidationTests(TestCase):
+    @staticmethod
+    def upload(format="PNG"):
+        buffer = BytesIO()
+        Image.new("RGB", (32, 16), "blue").save(buffer, format=format)
+        return SimpleUploadedFile("banner." + format.lower(), buffer.getvalue())
+
+    def form(self, *, url="", upload=None):
+        return BannerForm(
+            {
+                "eyebrow": "Care",
+                "title": "Hello",
+                "description": "",
+                "button_label": "Explore our services",
+                "url": url,
+                "position": 0,
+                "visible": "on",
+            },
+            {"image": upload or self.upload()},
+        )
+
+    def test_blank_copy_and_valid_https_url_can_be_saved(self):
+        form = self.form(url="https://example.com/care")
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["description"], None)
+
+    def test_unsafe_url_schemes_are_rejected(self):
+        for url in ("javascript:alert(1)", "ftp://example.com/care"):
+            form = self.form(url=url)
+            self.assertFalse(form.is_valid())
+            self.assertIn("url", form.errors)
+
+    def test_invalid_image_and_animation_upload_are_rejected(self):
+        for upload in (
+            SimpleUploadedFile("invalid.png", b"not an image"),
+            self.upload("GIF"),
+        ):
+            form = self.form(upload=upload)
+            self.assertFalse(form.is_valid())
+            self.assertIn("image", form.errors)
+
+    def test_oversized_image_is_rejected(self):
+        upload = self.upload()
+        upload.size = 5 * 1024 * 1024 + 1
+        form = self.form(upload=upload)
+        self.assertFalse(form.is_valid())
+        self.assertIn("image", form.errors)

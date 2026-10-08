@@ -42,7 +42,7 @@
             <th>Speciality</th>
             <th>Bio</th>
             <th>LinkedIn</th>
-            <th>Status</th>
+            <th>Website visibility</th>
           </tr>
         </thead>
         <tbody>
@@ -89,10 +89,10 @@
               {{team_lead.linkedin}}
             </td>
             <td>
-              {% if team_lead.is_active %}
-              <p class="text text-success">Active</p>
+              {% if team_lead.visible %}
+              <span class="badge badge-success">Visible</span>
               {% else %}
-              <p class="text text-danger">Inactive</p>
+              <span class="badge badge-secondary">Hidden</span>
               {% endif %}
             </td>
           </tr>

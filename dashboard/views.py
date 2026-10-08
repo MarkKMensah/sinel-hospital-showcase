@@ -3,7 +3,7 @@ import csv
 from django.shortcuts import get_object_or_404, redirect, render
 from django.db import transaction
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.views.generic import View
 from django.utils.decorators import method_decorator
 from blog.forms import PageForm, PostForm
@@ -437,38 +437,54 @@ class CreateUpdateTeamLead(View):
     model_class = TeamLead
     object_id_field = "team_lead_id"
 
+    def get_instance(self, object_id):
+        if not object_id:
+            return None
+        try:
+            object_id = int(object_id)
+        except (TypeError, ValueError):
+            raise Http404("Team lead not found.")
+        if not 1 <= object_id <= 9223372036854775807:
+            raise Http404("Team lead not found.")
+        return get_object_or_404(self.model_class, id=object_id)
+
     @method_decorator(staff_only())
     def get(self, request, *argd, **kwargs):
-        team_lead_id = request.GET.get("team_lead_id", -1)
+        instance = self.get_instance(request.GET.get(self.object_id_field))
         context = {
-            "team_lead": TeamLead.objects.filter(id=team_lead_id).first()
+            "team_lead": instance,
+            "form": self.form_class(instance=instance),
         }
         return render(request, self.template_name, context)
 
     @method_decorator(staff_only())
     def post(self, request, *argd, **kwargs):
-        object_id = request.POST.get(self.object_id_field) or None
-        instance = None
-        if object_id:
-            instance = get_object_or_404(self.model_class, id=object_id)
+        instance = self.get_instance(request.POST.get(self.object_id_field))
         form = self.form_class(request.POST,
                                request.FILES or None,
                                instance=instance)
         if form.is_valid():
-            form.save()
-        else:
-            for field, er in form.errors.items():
-                message = f"{field.title()}: {strip_tags(er)}"
-                messages.add_message(request, messages.ERROR, message)
-            return redirect_back(request, "dashboard:index")
-        return redirect("dashboard:team_leads")
+            team_lead = form.save()
+            visibility = "visible" if team_lead.visible else "hidden"
+            messages.success(
+                request,
+                f"{team_lead.fullname} was saved successfully and is {visibility} on the website.",
+            )
+            return redirect("dashboard:team_leads")
+        return render(
+            request,
+            self.template_name,
+            {"team_lead": instance, "form": form},
+        )
 
 
 class DeleteTeamLeadView(View):
     @method_decorator(staff_only())
     def post(self, request, *argd, **kwargs):
-        team_lead_id = request.POST.get("team_lead_id")
-        TeamLead.objects.filter(id=team_lead_id).delete()
+        team_lead = CreateUpdateTeamLead().get_instance(request.POST.get("team_lead_id"))
+        if team_lead is None:
+            raise Http404("Team lead not found.")
+        team_lead.delete()
         return redirect_back(request, "dashboard:index")
 
 
@@ -494,14 +510,22 @@ class BannersView(HomepageContentView):
 class CreateUpdateBannerView(View):
     template_name = "dashboard/create_update_banner.html"
 
+    @staticmethod
+    def get_instance(banner_id):
+        if not banner_id:
+            return None
+        try:
+            banner_id = int(banner_id)
+        except (ValueError, TypeError):
+            raise Http404("Banner not found.")
+        if not 1 <= banner_id <= 9223372036854775807:
+            raise Http404("Banner not found.")
+        return get_object_or_404(Banner, id=banner_id)
+
     @method_decorator(staff_only())
     def get(self, request, *args, **kwargs):
         banner_id = request.GET.get("banner_id")
-        banner = (
-            get_object_or_404(Banner, id=banner_id)
-            if banner_id
-            else None
-        )
+        banner = self.get_instance(banner_id)
         return render(
             request,
             self.template_name,
@@ -514,11 +538,7 @@ class CreateUpdateBannerView(View):
     @method_decorator(staff_only())
     def post(self, request, *args, **kwargs):
         banner_id = request.POST.get("banner_id")
-        banner = (
-            get_object_or_404(Banner, id=banner_id)
-            if banner_id
-            else None
-        )
+        banner = self.get_instance(banner_id)
         form = BannerForm(
             request.POST,
             request.FILES or None,
@@ -543,7 +563,9 @@ class CreateUpdateBannerView(View):
 class DeleteBannerView(View):
     @method_decorator(staff_only())
     def post(self, request, *args, **kwargs):
-        banner = get_object_or_404(Banner, id=request.POST.get("banner_id"))
+        banner = CreateUpdateBannerView.get_instance(request.POST.get("banner_id"))
+        if banner is None:
+            raise Http404("Banner not found.")
         title = banner.title
         banner.delete()
         messages.success(

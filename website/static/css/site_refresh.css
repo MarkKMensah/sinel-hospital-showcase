@@ -341,31 +341,68 @@
 
 .sinel-hero {
   position: relative;
+  overflow: hidden;
+  background: var(--sinel-navy);
+  touch-action: pan-y pinch-zoom;
+}
+
+.sinel-hero-slides {
+  display: grid;
+}
+
+.sinel-hero-slide {
+  position: relative;
   display: flex;
+  min-width: 0;
   min-height: 610px;
   align-items: center;
-  overflow: hidden;
-  background-position: center;
-  background-size: cover;
+  grid-area: 1 / 1;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 650ms ease, visibility 650ms;
+  background: linear-gradient(135deg, #172453, #27437f);
+}
+
+.sinel-hero-slide.is-current {
+  opacity: 1;
+  visibility: visible;
+  z-index: 1;
+}
+
+.sinel-hero-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.sinel-hero-image[hidden] {
+  display: none;
 }
 
 .sinel-hero-default {
-  background-image: url("../img/bg_image_1.jpg");
+  background: linear-gradient(135deg, #172453, #27437f);
 }
 
 .sinel-hero-overlay {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(19, 33, 75, 0.94) 0%, rgba(24, 48, 96, 0.78) 48%, rgba(19, 33, 75, 0.24) 100%);
+    linear-gradient(90deg, rgba(13, 24, 49, 0.86) 0%, rgba(13, 24, 49, 0.68) 32%, rgba(13, 24, 49, 0.12) 65%, transparent 100%);
 }
 
 .sinel-hero-content {
   position: relative;
   z-index: 1;
-  padding-top: 5.5rem;
-  padding-bottom: 5.5rem;
+  padding-top: 4.5rem;
+  padding-bottom: 6.5rem;
   color: white;
+}
+
+.sinel-hero-copy {
+  max-width: 610px;
 }
 
 .sinel-hero-content .sinel-eyebrow {
@@ -373,21 +410,91 @@
 }
 
 .sinel-hero h1 {
-  max-width: 780px;
+  max-width: 610px;
   margin-bottom: 1.25rem;
   color: white;
-  font-size: clamp(3rem, 7vw, 5.5rem);
+  font-size: clamp(2.65rem, 5vw, 4.5rem);
   font-weight: 800;
   letter-spacing: -0.04em;
-  line-height: 0.98;
+  line-height: 1.06;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
 }
 
 .sinel-hero p {
-  max-width: 650px;
+  max-width: 560px;
   margin-bottom: 2rem;
   color: rgba(255, 255, 255, 0.88);
   font-size: 1.15rem;
   line-height: 1.75;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.sinel-hero-controls {
+  position: absolute;
+  z-index: 2;
+  right: 1rem;
+  bottom: 1.1rem;
+  left: 1rem;
+  display: flex;
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: rgba(13, 24, 49, 0.85);
+  gap: 0.15rem;
+}
+
+.sinel-hero-controls[hidden] {
+  display: none;
+}
+
+.sinel-hero-controls button {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: white;
+  flex-shrink: 0;
+}
+
+.sinel-hero-controls button:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.sinel-hero-controls button:focus-visible {
+  outline: 2px solid #88ddff;
+  outline-offset: -2px;
+}
+
+.sinel-hero-dots {
+  display: flex;
+  max-width: min(45vw, 300px);
+  overflow-x: auto;
+}
+
+.sinel-hero-dots button {
+  width: 36px;
+}
+
+.sinel-hero-dots span {
+  width: 8px;
+  height: 8px;
+  border: 1px solid white;
+  border-radius: 50%;
+}
+
+.sinel-hero-dots [aria-current="true"] span {
+  background: white;
 }
 
 .sinel-hero-actions,
@@ -829,8 +936,28 @@
     grid-template-columns: 1fr;
   }
 
-  .sinel-hero {
-    min-height: 560px;
+  .sinel-hero-slide {
+    display: block;
+    min-height: 0;
+  }
+
+  .sinel-hero-image {
+    position: relative;
+    display: block;
+    height: auto;
+    max-height: 430px;
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
+    background: #f4f7fb;
+  }
+
+  .sinel-hero-overlay {
+    display: none;
+  }
+
+  .sinel-hero-content {
+    padding-top: 2.5rem;
+    padding-bottom: 5.5rem;
   }
 
   .home-story-image {
@@ -850,6 +977,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .sinel-hero-slide,
   .services-mega-menu,
   .services-menu-link,
   .services-nav-trigger .bi {
@@ -930,17 +1058,35 @@
 }
 
 @media (max-width: 575.98px) {
-  .sinel-hero {
-    min-height: 620px;
+  .sinel-hero-slide {
+    min-height: 0;
+  }
+
+  .sinel-hero-image {
+    position: relative;
+    display: block;
+    height: auto;
+    max-height: 340px;
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
+    background: #f4f7fb;
   }
 
   .sinel-hero-overlay {
-    background: rgba(19, 33, 75, 0.82);
+    display: none;
   }
 
   .sinel-hero-content {
-    padding-top: 4rem;
-    padding-bottom: 4rem;
+    padding-top: 2rem;
+    padding-bottom: 5.5rem;
+  }
+
+  .sinel-hero h1 {
+    font-size: clamp(2.2rem, 9vw, 3rem);
+  }
+
+  .sinel-hero p {
+    font-size: 1rem;
   }
 
   .sinel-hero-actions .btn,

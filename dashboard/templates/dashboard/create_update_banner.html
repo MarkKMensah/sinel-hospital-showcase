@@ -29,10 +29,18 @@
         {% endif %}
         {{ form.non_field_errors }}
 
+        <div class="form-group">
+          <label for="{{ form.eyebrow.id_for_label }}">Small heading</label>
+          {{ form.eyebrow }}
+          <small class="form-text text-muted">{{ form.eyebrow.help_text }} Leave blank to omit it.</small>
+          {{ form.eyebrow.errors }}
+        </div>
+
         <div class="form-row">
           <div class="form-group col-md-8">
             <label for="{{ form.title.id_for_label }}">Headline</label>
             {{ form.title }}
+            <small class="form-text text-muted">Keep it short. Line breaks are preserved.</small>
             {{ form.title.errors }}
           </div>
           <div class="form-group col-md-4">
@@ -46,6 +54,7 @@
         <div class="form-group">
           <label for="{{ form.description.id_for_label }}">Supporting text</label>
           {{ form.description }}
+          <small class="form-text text-muted">Optional. Leave blank to show no supporting text.</small>
           {{ form.description.errors }}
         </div>
 
@@ -57,28 +66,26 @@
           </div>
           {% endif %}
           {{ form.image }}
+          <small class="form-text text-muted">JPEG, PNG or WebP, up to 5 MB. Use a landscape image with important details away from the edges.</small>
           {{ form.image.errors }}
         </div>
 
         <div class="form-row">
-          <div class="form-group col-md-4">
-            <label for="{{ form.button_label.id_for_label }}">Button label</label>
-            {{ form.button_label }}
-            {{ form.button_label.errors }}
-          </div>
-          <div class="form-group col-md-4">
+          <div class="form-group col-md-6">
             <label for="{{ form.service.id_for_label }}">Link to a service</label>
             {{ form.service }}
             <small class="form-text text-muted">Recommended for an internal service page.</small>
             {{ form.service.errors }}
           </div>
-          <div class="form-group col-md-4">
+          <div class="form-group col-md-6">
             <label for="{{ form.url.id_for_label }}">Or external URL</label>
             {{ form.url }}
             <small class="form-text text-muted">{{ form.url.help_text }}</small>
             {{ form.url.errors }}
           </div>
         </div>
+        <p class="text-muted">The link opens from “Explore our services”. “Request an appointment” always opens appointment booking.</p>
+        <input type="hidden" name="button_label" value="Explore our services">
 
         <div class="form-check mb-4">
           {{ form.visible }}

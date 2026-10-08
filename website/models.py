@@ -2,6 +2,7 @@ import re
 from urllib.parse import parse_qs, urlparse
 
 from django.core.exceptions import ValidationError
+from django.core.validators import URLValidator
 from django.db import models
 from accounts.models import Administrator
 from django_ckeditor_5.fields import CKEditor5Field
@@ -81,6 +82,13 @@ class HealthTips(models.Model):
 
 
 class Banner(models.Model):
+    eyebrow = models.CharField(
+        max_length=80,
+        blank=True,
+        default="",
+        db_default="",
+        help_text="Optional small heading above the headline.",
+    )
     title = models.CharField(max_length=100)
     description = models.CharField(max_length=200, blank=True, null=True)
     url = models.URLField(
@@ -89,6 +97,7 @@ class Banner(models.Model):
         blank=True,
         null=True,
         help_text="Optional. A selected service takes priority over this URL.",
+        validators=[URLValidator(schemes=["http", "https"])],
     )
     service = models.ForeignKey(
         "Service",
@@ -111,7 +120,7 @@ class Banner(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ("position", "-updated_at", "-id")
+        ordering = ("position", "id")
 
     def __str__(self) -> str:
         return self.title
@@ -123,7 +132,24 @@ class Banner(models.Model):
                 "website:service_details",
                 args=[self.service_id],
             )
-        return self.url or reverse("website:services")
+        if self.url:
+            try:
+                URLValidator(schemes=["http", "https"])(self.url)
+            except ValidationError:
+                pass
+            else:
+                return self.url
+        return reverse("website:services")
+
+    @property
+    def display_image_url(self):
+        if self.image and self.image.name:
+            try:
+                if self.image.storage.exists(self.image.name):
+                    return self.image.url
+            except OSError:
+                pass
+        return ""
 
 
 class Service(models.Model):
