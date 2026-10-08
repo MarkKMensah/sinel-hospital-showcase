@@ -45,12 +45,10 @@ COPY --from=wheels /wheels/dist /wheels
 RUN python -m pip install --no-cache-dir --no-index --find-links=/wheels -r requirements.txt \
     && rm -rf /wheels
 
-COPY entrypoint.sh .
-RUN sed -i 's/\r$//g' entrypoint.sh \
-    && chmod +x entrypoint.sh
-
 COPY . .
-RUN chown -R sinel_web:sinel_web /home/sinel_web
+RUN sed -i 's/\r$//g' entrypoint.sh \
+    && chmod +x entrypoint.sh \
+    && chown -R sinel_web:sinel_web /home/sinel_web
 
 USER sinel_web
 
