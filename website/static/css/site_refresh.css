@@ -506,57 +506,65 @@
 
 .home-shortcuts {
   padding: 6rem 0;
-  background: #f7f7fb;
+  background: #f6f7f8;
 }
 
 .home-shortcut-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 1.15rem;
   margin-top: 3rem;
 }
 
 .home-shortcut-card {
-  position: relative;
+  --shortcut-accent: var(--sinel-sky-dark);
   display: flex;
-  min-height: 360px;
-  align-items: center;
+  min-width: 0;
+  min-height: 260px;
   padding: 1.5rem;
-  border: 1px solid rgba(31, 47, 99, 0.08);
-  border-radius: 1rem;
+  border: 1px solid #dfe3e8;
+  border-top: 3px solid var(--shortcut-accent);
+  border-radius: 0.35rem;
   background: white;
   color: var(--sinel-ink);
   flex-direction: column;
-  text-align: center;
-  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  text-align: left;
+}
+
+.home-shortcut-card:only-child {
+  width: 100%;
+  max-width: 420px;
+  grid-column: 1 / -1;
+  justify-self: center;
+}
+
+.home-shortcut-heading {
+  display: flex;
+  min-height: 32px;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1.25rem;
 }
 
 .home-shortcut-ribbon {
-  position: absolute;
-  z-index: 1;
-  top: 1rem;
-  max-width: 50%;
-  overflow: hidden;
-  padding: 0.38rem 0.75rem;
-  border-radius: 999px;
-  background: var(--sinel-sky);
-  box-shadow: 0 7px 18px rgba(23, 33, 61, 0.16);
+  max-width: calc(100% - 3rem);
+  padding: 0.35rem 0.6rem;
+  border-radius: 0.2rem;
+  background: var(--sinel-sky-dark);
   color: white;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  white-space: nowrap;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .home-shortcut-ribbon-right {
-  right: 1rem;
+  margin-left: auto;
 }
 
 .home-shortcut-ribbon-left {
-  left: 1rem;
+  order: -1;
+  margin-right: auto;
 }
 
 .home-shortcut-ribbon-navy {
@@ -568,7 +576,7 @@
 }
 
 .home-shortcut-ribbon-teal {
-  background: var(--sinel-teal);
+  background: #117c74;
 }
 
 .home-shortcut-ribbon-gold {
@@ -578,67 +586,74 @@
 
 .home-shortcut-card:hover,
 .home-shortcut-card:focus {
-  border-color: rgba(31, 169, 219, 0.35);
-  box-shadow: var(--sinel-shadow);
+  border-color: var(--shortcut-accent);
+  background: #fafcfd;
   color: var(--sinel-ink);
-  outline: none;
   text-decoration: none;
-  transform: translateY(-8px);
+}
+
+.home-shortcut-card:focus-visible {
+  outline: 3px solid var(--sinel-navy);
+  outline-offset: 4px;
+}
+
+.home-shortcut-card:hover .home-shortcut-link,
+.home-shortcut-card:focus-visible .home-shortcut-link {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
 }
 
 .home-shortcut-icon {
   display: inline-flex;
-  width: 142px;
-  height: 142px;
+  width: 32px;
+  height: 32px;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1.5rem;
-  border-radius: 50%;
-  background: #edf8fd;
-  color: var(--sinel-sky);
-  font-size: 3rem;
-  transition: background 180ms ease, color 180ms ease;
+  color: var(--shortcut-accent);
+  flex-shrink: 0;
+  font-size: 1.8rem;
+  line-height: 1;
 }
 
 .home-shortcut-title {
-  min-height: 48px;
-  font-size: 1rem;
+  font-size: 1.08rem;
   font-weight: 700;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .home-shortcut-description {
-  margin-top: 0.6rem;
+  margin-top: 0.75rem;
+  margin-bottom: 1.25rem;
   color: var(--sinel-muted);
-  font-size: 0.88rem;
-  line-height: 1.6;
+  font-size: 0.94rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
 }
 
 .home-shortcut-link {
   margin-top: auto;
-  padding-top: 1rem;
-  color: var(--sinel-sky-dark);
+  padding-top: 0.85rem;
+  border-top: 1px solid #edf0f2;
+  color: #08759e;
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 600;
 }
 
-.home-shortcut-navy .home-shortcut-icon {
-  background: #eef0f8;
-  color: var(--sinel-navy);
+.home-shortcut-navy {
+  --shortcut-accent: var(--sinel-navy);
 }
 
-.home-shortcut-red .home-shortcut-icon {
-  background: #fff0f1;
-  color: var(--sinel-red);
+.home-shortcut-red {
+  --shortcut-accent: var(--sinel-red);
 }
 
-.home-shortcut-teal .home-shortcut-icon {
-  background: #ebf8f6;
-  color: var(--sinel-teal);
+.home-shortcut-teal {
+  --shortcut-accent: var(--sinel-teal);
 }
 
-.home-shortcut-gold .home-shortcut-icon {
-  background: #fff7e8;
-  color: var(--sinel-gold);
+.home-shortcut-gold {
+  --shortcut-accent: var(--sinel-gold);
 }
 
 .home-story {
@@ -923,6 +938,10 @@
 }
 
 @media (max-width: 991.98px) {
+  .home-shortcut-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .services-mega-menu {
     right: -5.5rem;
     width: min(500px, calc(100vw - 2rem));
@@ -1107,7 +1126,7 @@
   }
 
   .home-shortcut-card {
-    min-height: 330px;
+    min-height: 0;
   }
 
   .services-hero {
