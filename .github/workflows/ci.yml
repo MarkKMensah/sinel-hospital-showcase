@@ -22,7 +22,7 @@ jobs:
       DEBUG: 'True'
       DJANGO_ALLOWED_HOSTS: 'localhost 127.0.0.1 testserver'
       SQL_ENGINE: django.db.backends.sqlite3
-      SQL_DATABASE: '${{ runner.temp }}/sinel-ci.sqlite3'
+      SQL_DATABASE: ':memory:'
     steps:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
