@@ -52,3 +52,41 @@ jobs:
         run: python -m pip_audit -r requirements.txt
       - name: Scan Python security issues
         run: python -m bandit -r accounts blog communications dashboard rest_api_v1 sinel_web website -ll -ii
+      - name: Build and start the demo container
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker build -f Dockerfile -t sinel-ci-demo .
+          trap 'docker rm -f sinel-ci-startup >/dev/null 2>&1 || true' EXIT
+          docker run --detach --name sinel-ci-startup --network none \
+            --memory 256m \
+            -e DEBUG=True -e DJANGO_ALLOWED_HOSTS=localhost \
+            -e SQL_ENGINE=django.db.backends.sqlite3 \
+            -e SQL_DATABASE=/tmp/sinel-ci.sqlite3 \
+            sinel-ci-demo \
+            gunicorn sinel_web.wsgi:application --bind 0.0.0.0:8000
+          ready=0
+          for attempt in {1..30}; do
+            if docker exec sinel-ci-startup python -c \
+              'from urllib.request import urlopen; assert urlopen("http://localhost:8000/", timeout=5).status == 200'; then
+              ready=1
+              break
+            fi
+            sleep 2
+          done
+          docker logs sinel-ci-startup
+          test "$ready" -eq 1
+          docker exec sinel-ci-startup python manage.py migrate --check
+          docker exec sinel-ci-startup python manage.py check
+          if docker run --rm --network none --memory 256m \
+            -e DEBUG=True -e SQL_ENGINE=django.db.backends.sqlite3 \
+            -e SQL_DATABASE=/nonexistent-directory/sinel-ci.sqlite3 \
+            sinel-ci-demo python -c 'print("ENTRYPOINT_BYPASSED_FAILURE")' \
+            > startup-failure.log 2>&1; then
+            cat startup-failure.log
+            exit 1
+          fi
+          if grep -q ENTRYPOINT_BYPASSED_FAILURE startup-failure.log; then
+            cat startup-failure.log
+            exit 1
+          fi
