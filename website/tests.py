@@ -5,6 +5,8 @@ from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 from io import BytesIO
 from PIL import Image
+from accounts.models import Administrator
+from blog.models import Page
 
 from .forms import BannerForm
 
@@ -595,6 +597,55 @@ class TestViews(TestCase):
         self.assertNotIn("scrollIntoView", script)
         self.assertIn("carousel.scrollTo", script)
         self.assertIn("carousel.scrollBy", script)
+
+
+class StaticPageVisibilityTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        author = Administrator.objects.create_user(
+            email_address="page-author@example.test",
+            password="PageTests!2026Only",
+        )
+        cls.page = Page.objects.create(
+            title="Hospital information",
+            content="<p>Draft page content must stay private.</p>",
+            by=author,
+        )
+
+    def page_url(self, slug=None):
+        return reverse(
+            "website:static_page_view",
+            args=[self.page.pk, slug or self.page.slug],
+        )
+
+    def test_hidden_page_is_unavailable_even_at_known_or_alternate_slug(self):
+        for slug in (self.page.slug, "guessed-slug"):
+            response = self.client.get(self.page_url(slug))
+            self.assertEqual(response.status_code, 404)
+            self.assertNotContains(response, "Draft page content", status_code=404)
+
+    def test_visibility_changes_and_deletion_take_effect_on_direct_url(self):
+        self.page.visible = True
+        self.page.save(update_fields=["visible"])
+        url = self.page_url()
+        self.assertContains(self.client.get(url), "Draft page content")
+        self.page.visible = False
+        self.page.save(update_fields=["visible"])
+        self.assertEqual(self.client.get(url).status_code, 404)
+        self.page.delete()
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_invalid_and_out_of_range_page_ids_return_not_found(self):
+        for page_id in ("invalid", "0", "-1", "9223372036854775808"):
+            response = self.client.get(
+                reverse("website:static_page_view", args=[page_id, "any-slug"])
+            )
+            self.assertEqual(response.status_code, 404)
+
+    def test_hidden_pages_are_not_in_public_navigation(self):
+        response = self.client.get(reverse("website:index"))
+        self.assertNotContains(response, self.page_url())
+        self.assertNotContains(response, self.page.title)
 
 
 class BannerValidationTests(TestCase):
