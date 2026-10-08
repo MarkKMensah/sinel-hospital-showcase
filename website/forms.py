@@ -90,6 +90,7 @@ class BannerForm(forms.ModelForm):
     class Meta:
         model = Banner
         fields = [
+            "eyebrow",
             "title",
             "description",
             "image",
@@ -100,7 +101,10 @@ class BannerForm(forms.ModelForm):
             "visible",
         ]
         widgets = {
-            "title": forms.TextInput(attrs={"class": "form-control"}),
+            "eyebrow": forms.TextInput(attrs={"class": "form-control"}),
+            "title": forms.Textarea(
+                attrs={"class": "form-control", "rows": 2}
+            ),
             "description": forms.Textarea(
                 attrs={"class": "form-control", "rows": 3}
             ),
@@ -122,6 +126,15 @@ class BannerForm(forms.ModelForm):
                 attrs={"class": "form-check-input"}
             ),
         }
+
+    def clean_image(self):
+        image = self.cleaned_data.get("image")
+        if image and hasattr(image, "image"):
+            if image.size > 5 * 1024 * 1024:
+                raise forms.ValidationError("Choose an image smaller than 5 MB.")
+            if image.image.format not in {"JPEG", "PNG", "WEBP"}:
+                raise forms.ValidationError("Choose a JPEG, PNG, or WebP image.")
+        return image
 
 
 class HomepageShortcutForm(forms.ModelForm):

@@ -122,19 +122,6 @@
   box-shadow: 0 24px 65px rgba(31, 47, 99, 0.12);
 }
 
-.sinel-login-lock {
-  display: inline-flex;
-  width: 50px;
-  height: 50px;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1.5rem;
-  border-radius: 50%;
-  background: #eaf7fc;
-  color: var(--login-sky);
-  font-size: 1.2rem;
-}
-
 .sinel-login-card h2 {
   margin-bottom: 0.5rem;
   color: var(--login-ink);

@@ -13,9 +13,9 @@
                     <i class="bi bi-award icon-gradient bg-tempting-azure"></i>
                 </div>
                 <div>
-                    New Team Lead
+                    {% if team_lead %}Edit Team Lead{% else %}New Team Lead{% endif %}
                     <div class="page-title-subheading">
-                        Add a new team lead that can access this dashboard.
+                        Manage this team member's profile and visibility on the hospital website.
                     </div>
                 </div>
             </div>
@@ -25,29 +25,39 @@
         <div class="card-body col-md-8 mx-auto">
             <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
-                <input type="hidden" name="team_lead_id" value={{team_lead.id}}>
+                <input type="hidden" name="team_lead_id" value="{{team_lead.id|default_if_none:''}}">
+                {% if form.errors %}
+                <div class="alert alert-danger" role="alert">
+                    Please correct the highlighted fields below.
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
 
                 <div class="form-group">
                     <label for="fullname">Full Name</label>
-                    <input class="form-control" type="text" name="fullname" id="fullname" value="{{team_lead.fullname}}"
-                        placeholder="Full Name" required>
+                    <input class="form-control{% if form.fullname.errors %} is-invalid{% endif %}" type="text" name="fullname" id="fullname" value="{{form.fullname.value|default_if_none:''}}"
+                        placeholder="Full Name" maxlength="100" required {% if form.fullname.errors %}aria-invalid="true" aria-describedby="fullname-errors"{% endif %}>
+                    <div id="fullname-errors" class="text-danger">{{ form.fullname.errors }}</div>
                 </div>
 
                 <div class="form-group">
                     <label for="title">Speciality</label>
-                    <input class="form-control" type="text" name="title" id="title" value="{{team_lead.title}}"
-                        placeholder="Speciality" required>
+                    <input class="form-control{% if form.title.errors %} is-invalid{% endif %}" type="text" name="title" id="title" value="{{form.title.value|default_if_none:''}}"
+                        placeholder="Speciality" maxlength="500" required {% if form.title.errors %}aria-invalid="true" aria-describedby="title-errors"{% endif %}>
+                    <div id="title-errors" class="text-danger">{{ form.title.errors }}</div>
                 </div>
 
                 <div class="form-group">
                     <label for="bio">Bio</label>
-                    <textarea class="form-control" name="bio" id="bio" rows="5">{{team_lead.bio}}</textarea>
+                    <textarea class="form-control{% if form.bio.errors %} is-invalid{% endif %}" name="bio" id="bio" rows="5" required {% if form.bio.errors %}aria-invalid="true" aria-describedby="bio-errors"{% endif %}>{{form.bio.value|default_if_none:''}}</textarea>
+                    <div id="bio-errors" class="text-danger">{{ form.bio.errors }}</div>
                 </div>
 
                 <div class="form-group">
                     <label for="linkedin">LinkedIn</label>
-                    <input class="form-control" type="url" name="linkedin" id="linkedin" value="{{team_lead.linkedin}}"
-                        placeholder="LinkedIn URL">
+                    <input class="form-control{% if form.linkedin.errors %} is-invalid{% endif %}" type="url" name="linkedin" id="linkedin" value="{{form.linkedin.value|default_if_none:''}}"
+                        placeholder="LinkedIn URL" {% if form.linkedin.errors %}aria-invalid="true" aria-describedby="linkedin-errors"{% endif %}>
+                    <div id="linkedin-errors" class="text-danger">{{ form.linkedin.errors }}</div>
                 </div>
 
                 <div class="form-group my-3 py-3" style="background-color: rgba(197, 197, 197, 0.2);">
@@ -62,21 +72,23 @@
                         {% endif %}
                     </div>
                     <input type="file" name="photo" id="photo" {% if not team_lead %}required{% endif %}
-                        class="form-control">
+                        class="form-control{% if form.photo.errors %} is-invalid{% endif %}" accept="image/*" {% if form.photo.errors %}aria-invalid="true" aria-describedby="photo-errors"{% endif %}>
+                    <div id="photo-errors" class="text-danger">{{ form.photo.errors }}</div>
                 </div>
 
                 <div class="form-group mt-3">
-                    <p class="m-0 text text-warning">Invisible team leads will not show on the website.</p>
-                    <label class="font-weight-bold" for="is_active">Status</label>
-                    <input type="checkbox" name="visible" id="visible" {% if team_lead.visible %}checked{% endif %}
-                        data-toggle="toggle" data-on="Visible" data-off="Invisible" data-onstyle="success"
+                    <p class="m-0 text text-muted">Hidden team members will not appear on the website.</p>
+                    <label class="font-weight-bold" for="visible">Website visibility</label>
+                    <input type="checkbox" name="visible" id="visible" {% if form.visible.value %}checked{% endif %}
+                        data-toggle="toggle" data-on="Visible" data-off="Hidden" data-onstyle="success"
                         data-offstyle="danger">
+                    <div class="text-danger">{{ form.visible.errors }}</div>
                 </div>
 
                 <div class="form-group">
-                    <button class="btn btn-primary mt-4" type="submit">Submit</button>
+                    <button class="btn btn-primary mt-4" type="submit">Save team member</button>
                 </div>
-                <form>
+            </form>
         </div>
     </div>
 </div>

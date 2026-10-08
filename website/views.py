@@ -23,10 +23,9 @@ class IndexView(View):
 
     def get(self, request, *args, **kwargs):
         context = {
-            "hero": (
+            "heroes": (
                 Banner.objects.filter(visible=True)
                 .select_related("service")
-                .first()
             ),
             "homepage_shortcuts": (
                 HomepageShortcut.objects.filter(

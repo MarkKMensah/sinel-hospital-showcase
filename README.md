@@ -26,6 +26,9 @@ technical portfolio artifact rather than a production mirror.
   testimonials, awards, news, and appointment booking
 - Dashboard-managed homepage banners, featured service shortcuts, promotional
   ribbons, hospital video, and recognition content
+- Rotating homepage banners with editable headings and links, responsive image
+  presentation, playback controls, and reduced-motion support
+- Consistent team visibility controls across the dashboard and public website
 - Service directory and navigation that automatically follow published
   dashboard records
 - Appointment workflow with compact operational views and CSV/Excel-friendly

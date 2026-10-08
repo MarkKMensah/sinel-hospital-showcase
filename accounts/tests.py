@@ -55,11 +55,15 @@ class WebAdministratorContainmentTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("_auth_user_id", self.client.session)
 
-    def test_login_page_uses_refreshed_secure_staff_layout(self):
+    def test_login_page_uses_restrained_staff_layout(self):
         response = self.client.get(reverse("accounts:login"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Secure staff access")
+        self.assertContains(response, "Welcome back")
+        self.assertContains(response, "Sign in to dashboard")
+        self.assertNotContains(response, "Secure staff access")
+        self.assertNotContains(response, "sinel-login-lock")
+        self.assertNotContains(response, "bi-arrow-right")
         self.assertContains(response, "login_refresh.css")
         self.assertContains(response, 'autocomplete="current-password"')
         self.assertNotContains(response, "Role-based access")

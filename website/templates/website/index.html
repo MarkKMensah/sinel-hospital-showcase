@@ -11,30 +11,60 @@
 {% endblock %}
 
 {% block content %}
-<section class="sinel-hero{% if not hero %} sinel-hero-default{% endif %}"
-  {% if hero %}style="background-image: url('{{ hero.image.url }}');"{% endif %}>
-  <div class="sinel-hero-overlay"></div>
-  <div class="container sinel-hero-content">
-    <span class="sinel-eyebrow">Specialist family care in Tema</span>
-    <h1>{% if hero %}{{ hero.title }}{% else %}Better Healthcare{% endif %}</h1>
-    <p>
-      {% if hero and hero.description %}
-      {{ hero.description }}
-      {% else %}
-      Trusted, compassionate care for every stage of life—from us to you.
+<section class="sinel-hero" data-hero-carousel aria-label="Sinel Hospital highlights" aria-roledescription="carousel">
+  <div class="sinel-hero-slides" aria-live="off">
+    {% for hero in heroes %}
+    <article class="sinel-hero-slide{% if forloop.first %} is-current{% endif %}"
+      data-hero-slide role="group" aria-roledescription="slide"
+      aria-label="{{ forloop.counter }} of {{ heroes|length }}"
+      {% if not forloop.first %}aria-hidden="true" inert{% endif %}>
+      {% with image_url=hero.display_image_url %}
+      {% if image_url %}
+      <img class="sinel-hero-image" data-hero-image src="{{ image_url }}" alt=""
+        {% if forloop.first %}fetchpriority="high"{% else %}loading="lazy"{% endif %}>
       {% endif %}
-    </p>
-    <div class="sinel-hero-actions">
-      <a href="{% if hero %}{{ hero.button_url }}{% else %}{% url 'website:services' %}{% endif %}"
-        class="btn btn-primary btn-lg">
-        {% if hero %}{{ hero.button_label }}{% else %}Explore our services{% endif %}
-        <i class="bi bi-arrow-right ml-2"></i>
-      </a>
-      <a href="{% url 'communications:book_appointment' %}" class="btn btn-light btn-lg">
-        Request an appointment
-      </a>
-    </div>
+      {% endwith %}
+      <div class="sinel-hero-overlay" aria-hidden="true"></div>
+      <div class="container sinel-hero-content">
+        <div class="sinel-hero-copy">
+          {% if hero.eyebrow %}<span class="sinel-eyebrow">{{ hero.eyebrow }}</span>{% endif %}
+          <h1>{{ hero.title }}</h1>
+          {% if hero.description %}<p>{{ hero.description }}</p>{% endif %}
+          <div class="sinel-hero-actions">
+            <a href="{{ hero.button_url }}" class="btn btn-primary btn-lg">Explore our services</a>
+            <a href="{% url 'communications:book_appointment' %}" class="btn btn-light btn-lg">Request an appointment</a>
+          </div>
+        </div>
+      </div>
+    </article>
+    {% empty %}
+    <article class="sinel-hero-slide sinel-hero-default is-current" data-hero-slide>
+      <div class="container sinel-hero-content">
+        <div class="sinel-hero-copy">
+          <h1>Sinel Hospital</h1>
+          <div class="sinel-hero-actions">
+            <a href="{% url 'website:services' %}" class="btn btn-primary btn-lg">Explore our services</a>
+            <a href="{% url 'communications:book_appointment' %}" class="btn btn-light btn-lg">Request an appointment</a>
+          </div>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
   </div>
+  {% if heroes|length > 1 %}
+  <div class="sinel-hero-controls" data-hero-controls hidden>
+    <button type="button" data-hero-previous aria-label="Previous banner"><i class="bi bi-chevron-left" aria-hidden="true"></i></button>
+    <div class="sinel-hero-dots">
+      {% for hero in heroes %}
+      <button type="button" data-hero-go="{{ forloop.counter0 }}" aria-label="Show banner {{ forloop.counter }}: {{ hero.title }}"
+        {% if forloop.first %}aria-current="true"{% endif %}><span aria-hidden="true"></span></button>
+      {% endfor %}
+    </div>
+    <button type="button" data-hero-next aria-label="Next banner"><i class="bi bi-chevron-right" aria-hidden="true"></i></button>
+    <button type="button" data-hero-toggle aria-label="Pause banner rotation"><i class="bi bi-pause-fill" aria-hidden="true"></i></button>
+  </div>
+  {% endif %}
+  <span class="sr-only" data-hero-status aria-live="polite" aria-atomic="true"></span>
 </section>
 
 {% if homepage_shortcuts %}
@@ -302,5 +332,6 @@
 {% endblock %}
 
 {% block scriptblock %}
+<script src="{% static 'js/hero_carousel.js' %}?v=20261008-1"></script>
 <script src="{% static 'js/recognition_video.js' %}?v=20260729-2"></script>
 {% endblock %}

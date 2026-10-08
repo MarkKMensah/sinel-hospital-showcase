@@ -32,7 +32,7 @@
       <div>
         <strong>Hero banners</strong>
         <small class="d-block text-muted">
-          The first visible banner by position is shown. When none is visible, the safe default banner remains.
+          Visible banners rotate every seven seconds in position order. When none is visible, the default banner is shown.
         </small>
       </div>
       <a class="btn btn-info" href="{% url 'dashboard:create_update_banner' %}">
@@ -63,6 +63,7 @@
                 {% endif %}
               </td>
               <td>
+                {% if banner.eyebrow %}<small class="d-block text-muted">{{ banner.eyebrow }}</small>{% endif %}
                 <strong>{{ banner.title }}</strong>
                 <small class="d-block text-muted">{{ banner.description|default:"No supporting text" }}</small>
               </td>
