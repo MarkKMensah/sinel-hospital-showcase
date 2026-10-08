@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404, render
+from django.http import Http404
 from django.views.generic import View
 from blog.models import Page, Post
 from .models import (
@@ -164,7 +165,13 @@ class StaticPageView(View):
     template_name = "website/static_page.html"
 
     def get(self, request, page_id, *args, **kwargs):
-        page = get_object_or_404(Page, id=page_id)
+        try:
+            page_id = int(page_id)
+        except (TypeError, ValueError):
+            raise Http404("Page not found.")
+        if not 1 <= page_id <= 9223372036854775807:
+            raise Http404("Page not found.")
+        page = get_object_or_404(Page, id=page_id, visible=True)
         context = {
             "page": page,
         }
