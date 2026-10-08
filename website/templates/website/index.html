@@ -78,17 +78,19 @@
     <div class="home-shortcut-grid">
       {% for shortcut in homepage_shortcuts %}
       <a class="home-shortcut-card home-shortcut-{{ shortcut.accent }}" href="{{ shortcut.service_url }}">
-        {% if shortcut.ribbon_text %}
-        <span class="home-shortcut-ribbon home-shortcut-ribbon-{{ shortcut.ribbon_position }} home-shortcut-ribbon-{{ shortcut.ribbon_style }}">
-          {{ shortcut.ribbon_text }}
-        </span>
-        {% endif %}
-        <span class="home-shortcut-icon" aria-hidden="true">
-          <i class="bi bi-{{ shortcut.icon }}"></i>
+        <span class="home-shortcut-heading">
+          <span class="home-shortcut-icon" aria-hidden="true">
+            <i class="bi bi-{{ shortcut.icon }}"></i>
+          </span>
+          {% if shortcut.ribbon_text %}
+          <span class="home-shortcut-ribbon home-shortcut-ribbon-{{ shortcut.ribbon_position }} home-shortcut-ribbon-{{ shortcut.ribbon_style }}">
+            {{ shortcut.ribbon_text }}
+          </span>
+          {% endif %}
         </span>
         <span class="home-shortcut-title">{{ shortcut.display_label }}</span>
         <span class="home-shortcut-description">{{ shortcut.display_description }}</span>
-        <span class="home-shortcut-link">View service <i class="bi bi-arrow-right"></i></span>
+        <span class="home-shortcut-link">Service details</span>
       </a>
       {% endfor %}
     </div>

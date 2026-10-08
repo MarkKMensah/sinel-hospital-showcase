@@ -3,12 +3,13 @@ from django.core.exceptions import ValidationError
 from django.shortcuts import reverse
 from django.test import TestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils.html import escape
 from io import BytesIO
 from PIL import Image
 from accounts.models import Administrator
 from blog.models import Page
 
-from .forms import BannerForm
+from .forms import BannerForm, HomepageShortcutForm
 
 from .models import (
     Album,
@@ -597,6 +598,152 @@ class TestViews(TestCase):
         self.assertNotIn("scrollIntoView", script)
         self.assertIn("carousel.scrollTo", script)
         self.assertIn("carousel.scrollBy", script)
+
+
+class HomepageShortcutRegressionTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.service = Service.objects.create(
+            title="Specialist care",
+            description="<p>Care for every stage of life.</p>",
+            image="uploads/images/shortcut-test.jpg",
+            visible=True,
+        )
+
+    def homepage(self):
+        return self.client.get(reverse("website:index"))
+
+    def test_cms_edits_update_shortcut_copy_icon_accent_and_ribbon(self):
+        shortcut = HomepageShortcut.objects.create(
+            service=self.service,
+            label="Original shortcut label",
+            description="Original shortcut description",
+            visible=True,
+        )
+        self.assertContains(self.homepage(), shortcut.label)
+        form = HomepageShortcutForm(
+            {
+                "service": self.service.pk,
+                "label": "Updated family care",
+                "description": "Updated support for patients and families.",
+                "icon": HomepageShortcut.Icon.PHARMACY,
+                "accent": HomepageShortcut.Accent.TEAL,
+                "ribbon_text": "Now available",
+                "ribbon_style": HomepageShortcut.RibbonStyle.GOLD,
+                "ribbon_position": HomepageShortcut.RibbonPosition.LEFT,
+                "position": 20,
+                "visible": "on",
+            },
+            instance=shortcut,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+        form.save()
+
+        response = self.homepage()
+
+        self.assertContains(response, "Updated family care")
+        self.assertContains(response, "Updated support for patients and families.")
+        self.assertContains(response, "bi-capsule-pill")
+        self.assertContains(response, "home-shortcut-teal")
+        self.assertContains(response, "home-shortcut-ribbon-gold")
+        self.assertContains(response, "home-shortcut-ribbon-left")
+        self.assertContains(response, "Now available")
+        self.assertContains(response, f'href="{shortcut.service_url}"')
+        self.assertNotContains(response, "Original shortcut label")
+        self.assertNotContains(response, "Original shortcut description")
+
+        shortcut.label = ""
+        shortcut.description = ""
+        shortcut.ribbon_text = ""
+        shortcut.save(update_fields=["label", "description", "ribbon_text"])
+        response = self.homepage()
+        self.assertContains(response, "Specialist care")
+        self.assertContains(response, "Care for every stage of life.")
+        self.assertNotContains(response, "Now available")
+        self.assertNotContains(response, "home-shortcut-ribbon-gold")
+
+    def test_disabling_and_removing_shortcut_updates_public_homepage(self):
+        shortcut = HomepageShortcut.objects.create(
+            service=self.service, label="Temporary featured service", visible=True
+        )
+        self.assertContains(self.homepage(), shortcut.label)
+
+        shortcut.visible = False
+        shortcut.save(update_fields=["visible"])
+        response = self.homepage()
+        self.assertNotContains(response, shortcut.label)
+        self.assertNotContains(response, 'id="home-services-title"')
+        self.assertTrue(HomepageShortcut.objects.filter(pk=shortcut.pk).exists())
+
+        shortcut.visible = True
+        shortcut.save(update_fields=["visible"])
+        self.assertContains(self.homepage(), shortcut.label)
+        label = shortcut.label
+        shortcut.delete()
+        response = self.homepage()
+        self.assertNotContains(response, label)
+        self.assertNotContains(response, 'id="home-services-title"')
+
+    def test_deleting_linked_service_removes_its_shortcut_and_destination(self):
+        shortcut = HomepageShortcut.objects.create(
+            service=self.service, label="Service due for removal", visible=True
+        )
+        shortcut_id = shortcut.pk
+        destination = shortcut.service_url
+        self.assertContains(self.homepage(), shortcut.label)
+
+        self.service.delete()
+
+        response = self.homepage()
+        self.assertFalse(HomepageShortcut.objects.filter(pk=shortcut_id).exists())
+        self.assertNotContains(response, "Service due for removal")
+        self.assertNotContains(response, destination)
+        self.assertNotContains(response, 'id="home-services-title"')
+        self.assertEqual(self.client.get(destination).status_code, 404)
+
+    def test_one_four_and_six_shortcuts_render_without_fixed_count(self):
+        for count in (1, 4, 6):
+            with self.subTest(count=count):
+                HomepageShortcut.objects.all().delete()
+                shortcuts = [
+                    HomepageShortcut.objects.create(
+                        service=self.service,
+                        label=f"Featured service number {index + 1}",
+                        position=index,
+                        visible=True,
+                    )
+                    for index in range(count)
+                ]
+
+                response = self.homepage()
+
+                self.assertEqual(list(response.context["homepage_shortcuts"]), shortcuts)
+                self.assertContains(response, '<a class="home-shortcut-card ', count=count)
+                for shortcut in shortcuts:
+                    self.assertContains(response, shortcut.label)
+
+    def test_long_shortcut_copy_and_ribbon_are_complete_and_html_escaped(self):
+        label_prefix = 'Care <script>alert("label")</script> & '
+        description_prefix = "<img src=x onerror=alert('description')> & "
+        label = label_prefix + "L" * (100 - len(label_prefix))
+        description = description_prefix + "D" * (200 - len(description_prefix))
+        ribbon = '<script>promo</script> &'
+        HomepageShortcut.objects.create(
+            service=self.service,
+            label=label,
+            description=description,
+            ribbon_text=ribbon,
+            visible=True,
+        )
+
+        response = self.homepage()
+
+        for value in (label, description, ribbon):
+            self.assertContains(response, escape(value))
+            self.assertNotContains(response, value)
+        self.assertEqual(len(label), 100)
+        self.assertEqual(len(description), 200)
+        self.assertLessEqual(len(ribbon), 24)
 
 
 class StaticPageVisibilityTests(TestCase):
