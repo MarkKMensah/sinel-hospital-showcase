@@ -1,4 +1,5 @@
 {% extends 'dashboard/base_template.html' %}
+{% load static %}
 {% block about-page-active %}mm-active{% endblock %}
 {% block headfiles %}{{ editor_media }}{% endblock %}
 
@@ -13,13 +14,19 @@
         </div>
         <div>
           About
-          <div class="page-title-subheading">Easily modify these fiels to update the website.</div>
+          <div class="page-title-subheading">Edit the About Us page content.</div>
         </div>
       </div>
 
     </div>
   </div>
   <ul class="body-tabs body-tabs-layout tabs-animated body-tabs-animated nav">
+    <li class="nav-item">
+      <a role="tab" class="nav-link {% if active_section == 'hero' %}active{% endif %}" id="tab-hero"
+        data-toggle="tab" href="#tab-content-hero">
+        <span>Page introduction</span>
+      </a>
+    </li>
     <li class="nav-item">
       <a role="tab" class="nav-link {% if active_section == 'overview' %}active{% endif %}" id="tab-0"
         data-toggle="tab" href="#tab-content-overview">
@@ -46,6 +53,34 @@
     </li>
   </ul>
   <div class="tab-content">
+    <div class="tab-pane tabs-animation fade {% if active_section == 'hero' %}show active{% endif %}"
+      id="tab-content-hero" role="tabpanel">
+      <div class="main-card mb-3 p-4 card">
+        <h2>Page introduction</h2>
+        <p class="text-muted">Edit the text at the top of the About Us page. The existing layout, logo and buttons stay the same.</p>
+        <form method="POST" id="about-introduction-form">
+          {% csrf_token %}
+          <input type="hidden" name="section" value="hero">
+          {{ hero_form.non_field_errors }}
+          <div class="row">
+            {% for field in hero_form %}
+            <div class="form-group {% if field.name == 'hero_title' or field.name == 'hero_description' or field.name == 'hero_note' %}col-12{% else %}col-md-6{% endif %}">
+              <label for="{{ field.id_for_label }}">{{ field.label }} <span aria-hidden="true">*</span></label>
+              {{ field }}
+              {{ field.errors }}
+              <div class="d-flex flex-wrap justify-content-between">
+                <small class="text-muted" id="{{ field.id_for_label }}_help">{{ field.help_text }}</small>
+                <small class="text-muted" id="{{ field.id_for_label }}_count" data-about-character-count="{{ field.id_for_label }}">
+                  {{ field.value|default_if_none:''|length }} / {{ field.field.max_length }} characters
+                </small>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <button class="btn btn-primary" type="submit">Save changes</button>
+        </form>
+      </div>
+    </div>
     <div class="tab-pane tabs-animation fade {% if active_section == 'overview' %}show active{% endif %}"
       id="tab-content-overview" role="tabpanel">
       <div class="row">
@@ -127,4 +162,8 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scriptfiles %}
+<script src="{% static 'js/about_content.js' %}?v=20261012-1" defer></script>
 {% endblock %}

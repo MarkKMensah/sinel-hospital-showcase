@@ -4,7 +4,7 @@
 {% block about_active %}active{% endblock %}
 
 {% block styleblock %}
-<link rel="stylesheet" href="{% static 'css/about_contact.css' %}?v=20260729-1">
+<link rel="stylesheet" href="{% static 'css/about_contact.css' %}?v=20261012-1">
 <link rel="stylesheet" href="{% static 'css/recognition_video.css' %}?v=20260729-1">
 {% endblock %}
 
@@ -20,11 +20,8 @@
           Home
         </a>
         <span class="public-page-eyebrow">About Us</span>
-        <h1>Care that has grown with generations</h1>
-        <p>
-          Sinel Specialist Hospital brings family-focused and specialist care
-          together under one roof—available whenever our community needs us.
-        </p>
+        <h1>{{ about_hero.hero_title }}</h1>
+        <p>{{ about_hero.hero_description }}</p>
         <div class="public-hero-actions">
           <a href="{% url 'website:services' %}" class="btn btn-light btn-lg">
             Explore our services
@@ -40,15 +37,15 @@
         <img src="{% static 'img/image.png' %}" alt="Sinel Specialist Hospital">
         <div class="about-hero-card-grid">
           <div>
-            <strong>40+</strong>
-            <span>Years serving families</span>
+            <strong>{{ about_hero.years_value }}</strong>
+            <span>{{ about_hero.years_label }}</span>
           </div>
           <div>
-            <strong>24/7</strong>
-            <span>Care availability</span>
+            <strong>{{ about_hero.availability_value }}</strong>
+            <span>{{ about_hero.availability_label }}</span>
           </div>
         </div>
-        <p>Personalised, professional healthcare.</p>
+        <p>{{ about_hero.hero_note }}</p>
       </div>
     </div>
   </div>

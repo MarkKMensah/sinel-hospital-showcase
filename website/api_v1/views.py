@@ -69,6 +69,9 @@ class AboutAPI(generics.GenericAPIView):
 class CreateUpdateDeleteModelMixin(generics.GenericAPIView):
     permission_classes = [IsContentManager]
 
+    def get_update_form(self, request, item):
+        return self.form_class(request.data, request.FILES, instance=item)
+
     def get(self, request, **kwargs):
         gallery = self.model_class.objects.all().order_by("-created_at")
         data = self.serializer_class(gallery,
@@ -96,7 +99,7 @@ class CreateUpdateDeleteModelMixin(generics.GenericAPIView):
     def patch(self, request, **kwargs):
         id = request.data.get("id")
         item = generics.get_object_or_404(self.model_class, id=id)
-        form = self.form_class(request.data, request.FILES, instance=item)
+        form = self.get_update_form(request, item)
         if form.is_valid():
             item = form.save()
             data = self.serializer_class(item, context={
@@ -145,6 +148,13 @@ class ServicesAPI(CreateUpdateDeleteModelMixin):
     model_class = Service
     response_keyword = "service"
     response_keyword_plural = "services"
+
+    def get_update_form(self, request, item):
+        form = super().get_update_form(request, item)
+        if "doctors" not in request.data:
+            # Omission must not validate or rewrite links, including concurrent edits.
+            form.fields.pop("doctors")
+        return form
 
 
 class TeamLeadsAPI(CreateUpdateDeleteModelMixin):

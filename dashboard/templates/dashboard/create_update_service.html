@@ -1,4 +1,5 @@
 {% extends 'dashboard/base_template.html' %}
+{% load static %}
 {% block services-page-active %}mm-active{% endblock %}
 {% block headfiles %}{{ form.media }}{% endblock %}
 {% block pagetitle %}Services{% endblock %}
@@ -27,18 +28,26 @@
 
           <form method="POST" enctype="multipart/form-data">
             {% csrf_token %}
-            <input type="hidden" name="service_id" value={{service.id}}>
+            <input type="hidden" name="service_id" value="{{service.id|default_if_none:''}}">
+            {% if form.errors %}
+            <div class="alert alert-danger" role="alert">
+              Please correct the highlighted fields below.
+              {{ form.non_field_errors }}
+            </div>
+            {% endif %}
 
             <div class="form-group">
-              <input class="form-control" type="text" name="title" id="title" value="{{service.title}}"
+              <label class="sr-only" for="title">Service title</label>
+              <input class="form-control{% if form.title.errors %} is-invalid{% endif %}" type="text" name="title" id="title" value="{{form.title.value|default_if_none:''}}"
                 placeholder="Title"
                 style="padding: 1.2em; border:none;background-color: rgba(197, 197, 197, 0.2); font-size: 2em;"
-                required>
+                maxlength="100" required {% if form.title.errors %}aria-invalid="true" aria-describedby="title-errors"{% endif %}>
               <small class="text text-info">Max Characters: 100</small>
+              <div id="title-errors" class="text-danger">{{ form.title.errors }}</div>
             </div>
 
             <div class="form-group my-3 py-3" style="background-color: rgba(197, 197, 197, 0.2);">
-              <label class="font-weight-bold" for="phot">Photo</label>
+              <label class="font-weight-bold" for="image">Photo</label>
               <div class="flex mb-3">
                 <span class="mr-10 font-weight-bold">Currently:</span>
                 {% if service.image %}
@@ -48,11 +57,13 @@
                 <span class="text text-danger">None</span>
                 {% endif %}
               </div>
-              <input class="form-control" type="file" name="image" {% if not service %}required{% endif %}>
+              <input class="form-control{% if form.image.errors %} is-invalid{% endif %}" type="file" name="image" id="image" accept="image/*" {% if not service %}required{% endif %}
+                {% if form.image.errors %}aria-invalid="true" aria-describedby="image-errors"{% endif %}>
+              <div id="image-errors" class="text-danger">{{ form.image.errors }}</div>
             </div>
 
             <div class="form-group mb-3">
-              <label for="schedules">
+              <label for="{{ form.schedules.id_for_label }}">
                 <h4>Schedules</h4>
               </label>
               {{ form.schedules.errors }}
@@ -66,25 +77,24 @@
             {{ form.description }}
 
             <div class="form-group">
-              <label for="doctor">
-                <h4>Doctors</h4>
+              <label for="{{ form.doctors.id_for_label }}">
+                <h4>{{ form.doctors.label }}</h4>
               </label>
-              <select class="form-control" name="doctors" id="doctors" multiple required>
-                {% for doctor in doctors %}
-                <option {% if doctor in service.doctors.all %}selected{% endif %} value="{{doctor.id}}">
-                  {{doctor.fullname}}
-                </option>
-                {% endfor %}
-              </select>
-              <small class="text text-info">Hold down Ctrl to select multiple.</small>
+              {{ form.doctors.errors }}
+              {{ form.doctors }}
+              <small id="{{ form.doctors.auto_id }}_helptext" class="text text-info">{{ form.doctors.help_text }}</small>
+              <div class="mt-2">
+                <button class="btn btn-sm btn-outline-secondary" type="button" id="clear-service-team-lead">Clear selection</button>
+              </div>
             </div>
 
             <div class="form-group mt-3">
               <p class="m-0 text text-warning">Invisible services will not show on the website.</p>
-              <label class="font-weight-bold" for="is_active">Status</label>
-              <input type="checkbox" name="visible" id="visible" {% if service.visible %}checked{% endif %}
+              <label class="font-weight-bold" for="visible">Status</label>
+              <input type="checkbox" name="visible" id="visible" {% if form.visible.value %}checked{% endif %}
                 data-toggle="toggle" data-on="Visible" data-off="Invisible" data-onstyle="success"
                 data-offstyle="danger">
+              <div class="text-danger">{{ form.visible.errors }}</div>
             </div>
 
             <div class="form-group">
@@ -96,4 +106,8 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scriptfiles %}
+<script src="{% static 'js/service_form.js' %}?v=20261012-1" defer></script>
 {% endblock %}

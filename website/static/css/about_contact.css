@@ -172,6 +172,20 @@
   font-size: 0.86rem;
 }
 
+.about-hero-copy,
+.about-hero-card,
+.about-hero-card-grid > div {
+  min-width: 0;
+}
+
+.about-hero h1,
+.about-hero-copy > p,
+.about-hero-card-grid strong,
+.about-hero-card-grid span,
+.about-hero-card > p {
+  overflow-wrap: anywhere;
+}
+
 .about-highlights {
   position: relative;
   z-index: 2;

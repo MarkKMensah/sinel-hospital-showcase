@@ -156,7 +156,7 @@ class Service(models.Model):
     title = models.CharField(max_length=100)
     description = CKEditor5Field()
     schedules = CKEditor5Field(default="")
-    doctors = models.ManyToManyField("TeamLead")
+    doctors = models.ManyToManyField("TeamLead", blank=True, verbose_name="Team Lead")
     image = models.ImageField(upload_to="uploads/images", )
     visible = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -415,6 +415,41 @@ class TeamLead(models.Model):
 
 
 class About(models.Model):
+    HERO_DEFAULTS = {
+        "hero_title": "Care that has grown with generations",
+        "hero_description": (
+            "Sinel Specialist Hospital brings family-focused and specialist care "
+            "together under one roof—available whenever our community needs us."
+        ),
+        "years_value": "40+",
+        "years_label": "Years serving families",
+        "availability_value": "24/7",
+        "availability_label": "Care availability",
+        "hero_note": "Personalised, professional healthcare.",
+    }
+    hero_title = models.CharField(
+        "Heading", max_length=80, default=HERO_DEFAULTS["hero_title"]
+    )
+    hero_description = models.TextField(
+        "Supporting text", max_length=240, default=HERO_DEFAULTS["hero_description"]
+    )
+    years_value = models.CharField(
+        "Years of care — value", max_length=12, default=HERO_DEFAULTS["years_value"]
+    )
+    years_label = models.CharField(
+        "Years of care — label", max_length=40, default=HERO_DEFAULTS["years_label"]
+    )
+    availability_value = models.CharField(
+        "Availability — value", max_length=12,
+        default=HERO_DEFAULTS["availability_value"],
+    )
+    availability_label = models.CharField(
+        "Availability — label", max_length=40,
+        default=HERO_DEFAULTS["availability_label"],
+    )
+    hero_note = models.CharField(
+        "Summary note", max_length=100, default=HERO_DEFAULTS["hero_note"]
+    )
     overview = CKEditor5Field()
     mission = CKEditor5Field()
     vision = CKEditor5Field()

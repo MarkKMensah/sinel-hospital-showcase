@@ -37,7 +37,30 @@ class ContactForm(forms.ModelForm):
         ]
 
 
-class AboutForm(forms.ModelForm):
+class AboutContentForm(forms.ModelForm):
+    def save(self, commit=True):
+        about = super().save(commit=False)
+        if commit:
+            if about.pk:
+                # Each editor owns only its validated fields, not another
+                # editor's concurrently saved introduction or rich-text section.
+                about.save(update_fields=set(self.fields) | {"updated_at"})
+            else:
+                about.save()
+            self.save_m2m()
+        return about
+
+
+class AboutForm(AboutContentForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Legacy API clients send only the four rich-text sections. Omitted
+        # introduction fields must retain their saved values/defaults.
+        if self.is_bound:
+            for name in About.HERO_DEFAULTS:
+                if name not in self.data:
+                    self.fields.pop(name, None)
+
     class Meta:
         model = About
         exclude = [
@@ -47,28 +70,51 @@ class AboutForm(forms.ModelForm):
         ]
 
 
-class AboutOverviewForm(forms.ModelForm):
+class AboutHeroForm(AboutContentForm):
+    class Meta:
+        model = About
+        fields = list(About.HERO_DEFAULTS)
+        widgets = {
+            "hero_description": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, field in self.fields.items():
+            limit = About._meta.get_field(name).max_length
+            field.help_text = f"Up to {limit} characters. Plain text only."
+            field.widget.attrs.update({
+                "class": "form-control",
+                "maxlength": limit,
+                "aria-describedby": (
+                    f"id_{name}_help id_{name}_count id_{name}_error"
+                ),
+                "data-about-character-limit": limit,
+            })
+
+
+class AboutOverviewForm(AboutContentForm):
     class Meta:
         model = About
         fields = ["overview"]
         widgets = {"overview": rich_text_widget()}
 
 
-class AboutMissionForm(forms.ModelForm):
+class AboutMissionForm(AboutContentForm):
     class Meta:
         model = About
         fields = ["mission"]
         widgets = {"mission": rich_text_widget()}
 
 
-class AboutVisionForm(forms.ModelForm):
+class AboutVisionForm(AboutContentForm):
     class Meta:
         model = About
         fields = ["vision"]
         widgets = {"vision": rich_text_widget()}
 
 
-class AboutValueForm(forms.ModelForm):
+class AboutValueForm(AboutContentForm):
     class Meta:
         model = About
         fields = ["value"]
@@ -262,6 +308,55 @@ class AwardForm(forms.ModelForm):
 
 
 class ServiceForm(forms.ModelForm):
+    class TeamLeadField(forms.ModelMultipleChoiceField):
+        def clean(self, value):
+            if isinstance(value, (list, tuple)):
+                for selected_id in value:
+                    try:
+                        selected_id_int = int(selected_id)
+                    except (TypeError, ValueError):
+                        raise forms.ValidationError(
+                            self.error_messages["invalid_pk_value"],
+                            code="invalid_pk_value",
+                            params={"pk": selected_id},
+                        )
+                    if not 1 <= selected_id_int <= 9223372036854775807:
+                        raise forms.ValidationError(
+                            self.error_messages["invalid_choice"],
+                            code="invalid_choice",
+                            params={"value": selected_id},
+                        )
+            return super().clean(value)
+
+    doctors = TeamLeadField(
+        queryset=TeamLead.objects.none(),
+        required=False,
+        label="Team Lead",
+        help_text=(
+            "Optional. Select one or more team members with Ctrl (Windows) or "
+            "Command (Mac). Hold the same key and click a selected name to remove "
+            "it. Existing hidden assignments are marked and remain hidden on the website."
+        ),
+        widget=forms.SelectMultiple(attrs={"class": "form-control"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        choices = TeamLead.objects.filter(visible=True)
+        if self.instance.pk:
+            # Preserve existing hidden assignments without offering other hidden leads.
+            choices = choices | TeamLead.objects.filter(
+                pk__in=self.instance.doctors.values_list("pk", flat=True)
+            )
+        self.fields["doctors"].queryset = choices.distinct().order_by("fullname", "pk")
+        self.fields["doctors"].label_from_instance = self.team_lead_label
+
+    @staticmethod
+    def team_lead_label(team_lead):
+        if not team_lead.visible:
+            return f"{team_lead.fullname} (hidden)"
+        return team_lead.fullname
+
     class Meta:
         model = Service
         exclude = [
