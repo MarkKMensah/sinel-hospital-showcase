@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.db import transaction
 from django.db.models import Q
 from django.http import Http404, HttpResponse
+from django.urls import reverse
 from django.views.generic import View
 from django.utils.decorators import method_decorator
 from blog.forms import PageForm, PostForm
@@ -32,6 +33,7 @@ from website.models import (
 from blog.models import Page, Post
 from django.contrib import messages
 from website.forms import (
+    AboutHeroForm,
     AboutMissionForm,
     AboutOverviewForm,
     AboutValueForm,
@@ -111,6 +113,7 @@ class IndexView(View):
 class AboutView(View):
     template_name = "dashboard/about.html"
     form_classes = {
+        "hero": AboutHeroForm,
         "overview": AboutOverviewForm,
         "mission": AboutMissionForm,
         "vision": AboutVisionForm,
@@ -131,18 +134,24 @@ class AboutView(View):
             editor_media += section_forms[name].media
         return {
             "about": about,
+            "hero_form": section_forms["hero"],
             "overview_form": section_forms["overview"],
             "mission_form": section_forms["mission"],
             "vision_form": section_forms["vision"],
             "value_form": section_forms["value"],
             "editor_media": editor_media,
-            "active_section": section or "overview",
+            "active_section": section or "hero",
         }
 
     @method_decorator(staff_only())
     def get(self, request, *argd, **kwargs):
-        about = get_object_or_404(About, pk=About.objects.values_list("pk", flat=True).first())
-        return render(request, self.template_name, self.get_context(about))
+        about = About.objects.first() or About()
+        section = request.GET.get("section", "hero")
+        if section not in self.form_classes:
+            section = "hero"
+        return render(
+            request, self.template_name, self.get_context(about, section=section)
+        )
 
     @method_decorator(staff_only())
     def post(self, request, *argd, **kwargs):
@@ -152,7 +161,7 @@ class AboutView(View):
             messages.error(request, "Choose a valid About section.")
             return redirect("dashboard:about")
 
-        about = get_object_or_404(About, pk=About.objects.values_list("pk", flat=True).first())
+        about = About.objects.first() or About()
         form = form_class(request.POST, instance=about)
         if not form.is_valid():
             return render(
@@ -163,8 +172,9 @@ class AboutView(View):
             )
 
         form.save()
-        messages.success(request, f"{section.title()} updated.")
-        return redirect_back(request, "dashboard:index")
+        label = "Page introduction" if section == "hero" else section.title()
+        messages.success(request, f"{label} updated successfully.")
+        return redirect(reverse("dashboard:about") + "?section=" + section)
 
 
 class AwardsView(View):
@@ -383,35 +393,44 @@ class CreateUpdateService(View):
     model_class = Service
     object_id_field = "service_id"
 
+    def get_instance(self, object_id):
+        if not object_id:
+            return None
+        try:
+            object_id = int(object_id)
+        except (TypeError, ValueError):
+            raise Http404("Service not found.")
+        if not 1 <= object_id <= 9223372036854775807:
+            raise Http404("Service not found.")
+        return get_object_or_404(self.model_class, pk=object_id)
+
     @method_decorator(staff_only())
     def get(self, request, *argd, **kwargs):
-        service_id = request.GET.get("service_id", -1)
-        service = Service.objects.filter(id=service_id).first()
+        service = self.get_instance(request.GET.get(self.object_id_field))
         form = self.form_class(instance=service)
         context = {
             "service": service,
             "form": form,
-            "doctors": TeamLead.objects.filter(visible=True),
         }
         return render(request, self.template_name, context)
 
     @method_decorator(staff_only())
     def post(self, request, *argd, **kwargs):
-        object_id = request.POST.get(self.object_id_field) or None
-        instance = None
-        if object_id:
-            instance = get_object_or_404(self.model_class, id=object_id)
+        instance = self.get_instance(request.POST.get(self.object_id_field))
         form = self.form_class(request.POST,
                                request.FILES or None,
                                instance=instance)
         if form.is_valid():
-            form.save()
-        else:
-            for field, er in form.errors.items():
-                message = f"{field.title()}: {strip_tags(er)}"
-                messages.add_message(request, messages.ERROR, message)
-            return redirect_back(request, "dashboard:index")
-        return redirect("dashboard:services")
+            with transaction.atomic():
+                service = form.save()
+            messages.success(request, f"{service.title} was saved successfully.")
+            return redirect("dashboard:services")
+        return render(
+            request,
+            self.template_name,
+            {"service": instance, "form": form},
+            status=400,
+        )
 
 
 class DeleteServiceView(View):

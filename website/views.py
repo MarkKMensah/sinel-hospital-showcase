@@ -56,8 +56,10 @@ class AboutView(View):
     template_name = "website/about.html"
 
     def get(self, request, *args, **kwargs):
+        about = About.objects.first()
         context = {
-            "about": About.objects.first(),
+            "about": about,
+            "about_hero": about or About(),
             "awards": [
                 award
                 for award in Award.objects.filter(visible=True)
