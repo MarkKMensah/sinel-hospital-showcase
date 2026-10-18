@@ -1,5 +1,5 @@
 {% extends 'website/base_template.html' %}
-{% load static %}
+{% load static content_safety %}
 
 {% block content %}
 <section class="service-detail-hero">
@@ -9,9 +9,9 @@
         <a class="service-back-link" href="{% url 'website:services' %}">
           <i class="bi bi-arrow-left"></i> All services
         </a>
-        <span class="sinel-eyebrow">Sinel specialist care</span>
+        <span class="sinel-eyebrow">{{ request.content.service_intro.eyebrow }}</span>
         <h1>{{ service.title }}</h1>
-        <p>Speak with our team to understand the right next step for your care.</p>
+        <p>{{ request.content.service_intro.body }}</p>
         <div class="service-detail-actions">
           <a href="{% url 'communications:book_appointment' %}" class="btn btn-primary btn-lg">
             Request an appointment
@@ -35,16 +35,16 @@
     <div class="row">
       <div class="col-lg-8">
         <div class="service-copy">
-          <span class="sinel-eyebrow">About this service</span>
-          <h2>How we can help</h2>
-          {{ service.description|safe }}
+          <span class="sinel-eyebrow">{{ request.content.service_description.eyebrow }}</span>
+          <h2>{{ request.content.service_description.title }}</h2>
+          {{ service.description|rich_content }}
         </div>
       </div>
       <div class="col-lg-4">
         <aside class="service-schedule-card">
           <span class="service-schedule-icon"><i class="bi bi-calendar2-check"></i></span>
           <h2>Schedule</h2>
-          <div>{{ service.schedules|safe }}</div>
+          <div>{{ service.schedules|rich_content }}</div>
           <a href="{% url 'communications:book_appointment' %}" class="btn btn-light btn-block mt-3">
             Book this service
           </a>
@@ -58,8 +58,8 @@
 <section class="page-section bg-light service-team">
   <div class="container">
     <div class="section-heading text-center">
-      <span class="sinel-eyebrow">Your care team</span>
-      <h2>Specialists for this service</h2>
+      <span class="sinel-eyebrow">{{ request.content.service_team.eyebrow }}</span>
+      <h2>{{ request.content.service_team.title }}</h2>
     </div>
     <div class="row justify-content-center mt-4">
       {% for doctor in doctors %}
@@ -67,9 +67,9 @@
         <div class="card-doctor h-100">
           <div class="header">
             <img src="{{ doctor.photo.url }}" alt="{{ doctor.fullname }}">
-            {% if doctor.linkedin %}
+            {% if doctor.public_linkedin_url %}
             <div class="meta">
-              <a href="{{ doctor.linkedin }}" target="_blank" rel="noopener"
+              <a href="{{ doctor.public_linkedin_url }}" target="_blank" rel="noopener"
                 aria-label="{{ doctor.fullname }} on LinkedIn">
                 <span class="bi bi-linkedin"></span>
               </a>
@@ -95,9 +95,9 @@
   <div class="container">
     <div class="testimonials-heading">
       <div>
-        <span>Patient experiences</span>
-      <h2>What our patients say</h2>
-        <p>Experiences related to this service.</p>
+        <span>{{ request.content.shared_service_testimonials.eyebrow }}</span>
+      <h2>{{ request.content.shared_service_testimonials.title }}</h2>
+        <p>{{ request.content.shared_service_testimonials.body }}</p>
       </div>
     </div>
 

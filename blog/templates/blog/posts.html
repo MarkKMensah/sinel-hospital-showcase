@@ -19,12 +19,9 @@
     </nav>
     <div class="blog-hero-grid">
       <div>
-        <span class="sinel-eyebrow">Health, care and community</span>
-        <h1>Ideas for healthier lives</h1>
-        <p>
-          Hospital news, practical health guidance and stories from the
-          people shaping care at Sinel.
-        </p>
+        <span class="sinel-eyebrow">{{ request.content.news_intro.eyebrow }}</span>
+        <h1>{{ request.content.news_intro.title }}</h1>
+        <p>{{ request.content.news_intro.body }}</p>
       </div>
       <form class="blog-search" method="get" action="{% url 'blog:posts' %}" role="search">
         <label for="blog-search-input">Search Sinel News</label>

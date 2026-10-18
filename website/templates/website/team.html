@@ -18,12 +18,9 @@
           <i class="bi bi-arrow-left" aria-hidden="true"></i>
           Home
         </a>
-        <span class="team-eyebrow">Our people</span>
-        <h1>People behind your care</h1>
-        <p>
-          Meet the clinical specialists, care teams and operational professionals
-          working together to make every Sinel experience safe, personal and dependable.
-        </p>
+        <span class="team-eyebrow">{{ request.content.team_intro.eyebrow }}</span>
+        <h1>{{ request.content.team_intro.title }}</h1>
+        <p>{{ request.content.team_intro.body }}</p>
         <div class="team-hero-actions">
           <a href="#team-directory" class="btn btn-light btn-lg">
             Meet the team
@@ -68,11 +65,9 @@
   <div class="container">
     <div class="team-directory-heading">
       <div>
-        <span class="team-eyebrow">Team directory</span>
-        <h2 id="team-directory-title">Find the right person for your care</h2>
-        <p>
-          Search by name or narrow the directory by specialty and department.
-        </p>
+        <span class="team-eyebrow">{{ request.content.team_directory.eyebrow }}</span>
+        <h2 id="team-directory-title">{{ request.content.team_directory.title }}</h2>
+        <p>{{ request.content.team_directory.body }}</p>
       </div>
       {% if doctors %}
       <span class="team-results-summary" aria-live="polite">

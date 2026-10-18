@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from website.forms import SocialMediaLinkForm
-from website.models import About, Client, Contact, Media, OpeningHour, Service, TeamLead
+from website.models import About, Client, Contact, Media, OpeningHour, Service, SocialMediaLink, TeamLead
 
 
 class ContactSerializer(serializers.ModelSerializer):
@@ -56,8 +55,8 @@ class TeamLeadSerializer(serializers.ModelSerializer):
 
     def get_image(self, item):
         request = self.context.get("request")
-        if item.image:
-            url = item.image.url
+        if item.photo:
+            url = item.photo.url
             return request.build_absolute_uri(url)
         return ""
 
@@ -92,5 +91,5 @@ class SocialMediaLinkSerializer(serializers.ModelSerializer):
         return ""
 
     class Meta:
-        model = SocialMediaLinkForm
+        model = SocialMediaLink
         exclude = ["created_at", "updated_at"]

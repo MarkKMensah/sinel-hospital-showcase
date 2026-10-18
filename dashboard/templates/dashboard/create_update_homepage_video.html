@@ -24,6 +24,8 @@
     <div class="card-body">
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
+        <input type="hidden" name="editor_revision" value="{{ editor_revision }}">
+        {% if form.non_field_errors %}<p><a href="{{ editor_reload_url }}" target="_blank" rel="noopener">Open latest saved version</a></p>{% endif %}
         {{ form.non_field_errors }}
 
         <div class="form-row">
@@ -73,6 +75,13 @@
             {{ form.poster_url.errors }}
           </div>
         </div>
+
+        {% for field in form %}{% if field.name == 'poster_alt' or field.name == 'duration_label' or field.name == 'link_label' %}
+        <div class="form-group">
+          {{ field.label_tag }} {{ field }} {{ field.errors }}
+          <small class="form-text text-muted">{{ field.help_text }}</small>
+        </div>
+        {% endif %}{% endfor %}
 
         <div class="form-check mb-4">
           {{ form.visible }}

@@ -1,8 +1,12 @@
+import math
+
 from django import forms
+from django.db.models import Q
 from django_ckeditor_5.widgets import CKEditor5Widget
 
 from .models import (
     About,
+    Album,
     Award,
     Banner,
     Client,
@@ -18,6 +22,8 @@ from .models import (
     TeamLead,
     Testimonial,
 )
+from .site_settings import normalized_phone, validate_public_url
+from .rich_content import RichContentFormMixin
 
 
 def rich_text_widget():
@@ -27,17 +33,56 @@ def rich_text_widget():
     )
 
 
+class AlbumForm(forms.ModelForm):
+    class Meta:
+        model = Album
+        fields = ["name"]
+
+
 class ContactForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in ("gps", "lat_lng"):
+            self.fields[name].required = False
+        self.fields["lat_lng"].help_text = (
+            "Optional. Enter latitude, longitude, for example 5.67, -0.02."
+        )
+        self.fields["telephone"].strip = False
+        for field in self.fields.values():
+            field.widget.attrs["class"] = "form-control"
+
+    def clean_lat_lng(self):
+        value = self.cleaned_data.get("lat_lng", "").strip()
+        if not value:
+            return ""
+        try:
+            latitude, longitude = (float(part.strip()) for part in value.split(","))
+        except (TypeError, ValueError):
+            raise forms.ValidationError("Enter latitude, longitude as two numbers.")
+        if not (
+            math.isfinite(latitude) and math.isfinite(longitude)
+            and -90 <= latitude <= 90 and -180 <= longitude <= 180
+        ):
+            raise forms.ValidationError("Latitude must be -90 to 90 and longitude -180 to 180.")
+        # Keep the stored/map representation identical, including exponent input.
+        return ", ".join(
+            "0" if coordinate == 0 else f"{coordinate:.15f}".rstrip("0").rstrip(".")
+            for coordinate in (latitude, longitude)
+        )
+
+    def clean_telephone(self):
+        value = self.cleaned_data["telephone"]
+        if not normalized_phone(value):
+            raise forms.ValidationError("Enter a telephone number with 7 to 15 digits.")
+        return value.strip()
+
     class Meta:
         model = Contact
-        exclude = [
-            "id",
-            "created_at",
-            "update_at",
-        ]
+        fields = ["email", "gps", "address", "telephone", "lat_lng"]
+        widgets = {"address": forms.Textarea(attrs={"rows": 3})}
 
 
-class AboutContentForm(forms.ModelForm):
+class AboutContentForm(RichContentFormMixin, forms.ModelForm):
     def save(self, commit=True):
         about = super().save(commit=False)
         if commit:
@@ -124,12 +169,7 @@ class AboutValueForm(AboutContentForm):
 class MediaForm(forms.ModelForm):
     class Meta:
         model = Media
-        exclude = [
-            "id",
-            "media_type",
-            "created_at",
-            "update_at",
-        ]
+        fields = ["name", "description", "album", "file", "visible"]
 
 
 class BannerForm(forms.ModelForm):
@@ -227,6 +267,36 @@ class HomepageShortcutForm(forms.ModelForm):
 
 
 class HomepageVideoForm(forms.ModelForm):
+    description = forms.CharField(
+        max_length=420, required=False,
+        help_text="Up to 420 characters. Plain text.",
+        widget=forms.Textarea(attrs={"class": "form-control", "rows": 4, "maxlength": 420}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Older manager API clients do not know the new metadata fields. Omission
+        # retains them; an explicit blank duration/alt deliberately clears it.
+        for name in ("poster_alt", "duration_label", "link_label"):
+            if self.is_bound and name not in self.data:
+                self.fields.pop(name)
+            elif name in self.fields:
+                field = self.fields[name]
+                field.widget.attrs.update({"class": "form-control", "maxlength": field.max_length})
+                field.help_text = f"Up to {field.max_length} characters. Plain text."
+
+    def clean_poster_url(self):
+        from .site_settings import validate_public_url
+        value = self.cleaned_data.get("poster_url", "")
+        validate_public_url(value)
+        return value
+
+    def clean_youtube_url(self):
+        from .site_settings import validate_public_url
+        value = self.cleaned_data["youtube_url"]
+        validate_public_url(value)
+        return value
+
     class Meta:
         model = HomepageVideo
         fields = [
@@ -236,6 +306,9 @@ class HomepageVideoForm(forms.ModelForm):
             "youtube_url",
             "poster",
             "poster_url",
+            "poster_alt",
+            "duration_label",
+            "link_label",
             "visible",
         ]
         widgets = {
@@ -307,7 +380,7 @@ class AwardForm(forms.ModelForm):
         }
 
 
-class ServiceForm(forms.ModelForm):
+class ServiceForm(RichContentFormMixin, forms.ModelForm):
     class TeamLeadField(forms.ModelMultipleChoiceField):
         def clean(self, value):
             if isinstance(value, (list, tuple)):
@@ -373,11 +446,7 @@ class ServiceForm(forms.ModelForm):
 class TeamLeadForm(forms.ModelForm):
     class Meta:
         model = TeamLead
-        exclude = [
-            "id",
-            "created_at",
-            "update_at",
-        ]
+        fields = ["fullname", "bio", "linkedin", "title", "photo", "visible"]
 
 
 class ClientForm(forms.ModelForm):
@@ -411,31 +480,76 @@ class SocialMediaLinkForm(forms.ModelForm):
 
 
 class TestimonialForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name, model, label_field in (
+            ("service", Service, "title"), ("doctor", TeamLead, "fullname")
+        ):
+            current_id = getattr(self.instance, f"{name}_id", None)
+            self.fields[name].queryset = model.objects.filter(
+                Q(visible=True) | Q(pk=current_id)
+            ).order_by(label_field, "pk")
+            self.fields[name].required = False
+            self.fields[name].empty_label = "None"
+            self.fields[name].label_from_instance = (
+                lambda item, attr=label_field: (
+                    f"{getattr(item, attr)} (hidden)" if not item.visible
+                    else getattr(item, attr)
+                )
+            )
+        self.fields["doctor"].label = "Team Lead"
+        self.fields["service"].help_text = "Optional. Existing hidden associations remain hidden publicly."
+        self.fields["username"].label = "Name"
+        for field in self.fields.values():
+            if not isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs["class"] = "form-control"
+
     class Meta:
         model = Testimonial
-        exclude = [
-            "id",
-            "added_by",
-            "created_at",
-            "update_at",
-        ]
+        fields = ["username", "message", "service", "doctor", "photo", "visible"]
+        widgets = {"message": forms.Textarea(attrs={"rows": 5})}
 
 
 class PartnerForm(forms.ModelForm):
+    CATEGORIES = (
+        "Insurance Partners", "Financial Partners", "Wellness & Fitness", "Corporate Partners"
+    )
+    category = forms.ChoiceField(choices=[(value, value) for value in CATEGORIES])
+    website = forms.CharField(
+        required=False, max_length=200, strip=False,
+        validators=[validate_public_url], widget=forms.URLInput,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        current_category = getattr(self.instance, "category", "")
+        if current_category and current_category not in self.CATEGORIES:
+            label = "Financial Partners (existing category)" if current_category == "Financial Partnerss" else f"{current_category} (existing category)"
+            self.fields["category"].choices = [*self.fields["category"].choices, (current_category, label)]
+        for field in self.fields.values():
+            if not isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs["class"] = "form-control"
+
     class Meta:
         model = Partner
-        exclude = [
-            "id",
-            "created_at",
-            "update_at",
-        ]
+        fields = ["name", "category", "description", "website", "logo", "visible"]
+        widgets = {"description": forms.Textarea(attrs={"rows": 4})}
 
 
 class NotificationForm(forms.ModelForm):
+    def clean(self):
+        cleaned = super().clean()
+        available = cleaned.get("available_at")
+        expires = cleaned.get("expires_at")
+        if available and expires and expires <= available:
+            self.add_error("expires_at", "Choose an expiry after the start time.")
+        return cleaned
+
     class Meta:
         model = Notification
-        exclude = [
-            "id",
-            "created_at",
-            "update_at",
-        ]
+        fields = ["title", "message", "url", "available_at", "expires_at"]
+        widgets = {
+            "message": forms.Textarea(attrs={"rows": 4}),
+            "available_at": forms.DateTimeInput(format="%Y-%m-%dT%H:%M", attrs={"type": "datetime-local"}),
+            "expires_at": forms.DateTimeInput(format="%Y-%m-%dT%H:%M", attrs={"type": "datetime-local"}),
+        }

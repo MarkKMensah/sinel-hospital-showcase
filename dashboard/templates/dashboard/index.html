@@ -1,4 +1,5 @@
 {% extends 'dashboard/base_template.html' %}
+{% load content_safety %}
 {% block dashboard-page-active %}mm-active{% endblock %}
 {% block pagetitle %}Dashboard{% endblock %} {% block content %}
 
@@ -75,7 +76,7 @@
                 <div class="card">
                     <div class="card-body mb-3">
                         <h5 class="card-title">Overview</h5>
-                        {{about.overview|safe}}
+                        {{about.overview|rich_content}}
                     </div>
                 </div>
             </div>
@@ -84,7 +85,7 @@
                 <div class="card">
                     <div class="card-body mb-3">
                         <h5 class="card-title">Mission</h5>
-                        {{about.mission|safe}}
+                        {{about.mission|rich_content}}
                     </div>
                 </div>
             </div>
@@ -92,7 +93,7 @@
                 <div class="card">
                     <div class="card-body mb-3">
                         <h5 class="card-title">Vision</h5>
-                        {{about.vision|safe}}
+                        {{about.vision|rich_content}}
                     </div>
                 </div>
             </div>
@@ -101,7 +102,7 @@
                 <div class="card">
                     <div class="card-body mb-3">
                         <h5 class="card-title">Value</h5>
-                        {{about.value|safe}}
+                        {{about.value|rich_content}}
                     </div>
                 </div>
             </div>

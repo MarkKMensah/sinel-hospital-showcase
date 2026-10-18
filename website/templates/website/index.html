@@ -1,6 +1,6 @@
 {% extends 'website/base_template.html' %}
 
-{% load static %}
+{% load static content_safety %}
 {% load humanize %}
 
 {% block home_active %}active{% endblock %}
@@ -71,9 +71,9 @@
 <section class="home-shortcuts" aria-labelledby="home-services-title">
   <div class="container">
     <div class="section-heading text-center">
-      <span class="sinel-eyebrow">Care made easier</span>
-      <h2 id="home-services-title">Find the right service</h2>
-      <p>Choose a service to see schedules, specialists and care information.</p>
+      <span class="sinel-eyebrow">{{ request.content.home_services.eyebrow }}</span>
+      <h2 id="home-services-title">{{ request.content.home_services.title }}</h2>
+      <p>{{ request.content.home_services.body }}</p>
     </div>
     <div class="home-shortcut-grid">
       {% for shortcut in homepage_shortcuts %}
@@ -107,10 +107,10 @@
   <div class="container">
     <div class="row align-items-center">
       <div class="col-lg-6 py-4">
-        <span class="sinel-eyebrow">Care that grows with you</span>
-        <h2>A family hospital built around people</h2>
+        <span class="sinel-eyebrow">{{ request.content.home_story.eyebrow }}</span>
+        <h2>{{ request.content.home_story.title }}</h2>
         <div class="home-story-copy">
-          {{ about.overview|safe }}
+          {{ about.overview|rich_content }}
         </div>
         <a href="{% url 'website:about' %}" class="btn btn-primary mt-3">
           Our story <i class="bi bi-arrow-right ml-2"></i>
@@ -118,7 +118,11 @@
       </div>
       <div class="col-lg-6">
         <div class="home-story-image">
+          {% if request.content.home_story.image %}
+          <img src="{{ request.content.home_story.image.url }}" alt="{{ request.content.home_story.image_alt|default:request.content.home_story.title }}">
+          {% else %}
           <img src="{% static 'img/bg-doctor.png' %}" alt="Sinel healthcare professional">
+          {% endif %}
         </div>
       </div>
     </div>
@@ -140,12 +144,12 @@
 
         <div class="home-video-facts" aria-label="Sinel Hospital at a glance">
           <div>
-            <strong>40+</strong>
-            <span>Years of care</span>
+            <strong>{{ request.about_hero.years_value }}</strong>
+            <span>{{ request.about_hero.years_label }}</span>
           </div>
           <div>
-            <strong>24/7</strong>
-            <span>Always available</span>
+            <strong>{{ request.about_hero.availability_value }}</strong>
+            <span>{{ request.about_hero.availability_label }}</span>
           </div>
           <div>
             <strong>{{ visible_service_count }}</strong>
@@ -157,7 +161,7 @@
           target="_blank" rel="noopener" data-video-trigger
           data-video-embed="{{ homepage_video.embed_url }}">
           <i class="bi bi-play-circle-fill" aria-hidden="true"></i>
-          Watch the hospital tour
+          {{ homepage_video.link_label }}
         </a>
       </div>
 
@@ -166,12 +170,12 @@
         data-video-embed="{{ homepage_video.embed_url }}"
         aria-label="Play {{ homepage_video.title }}">
         <img src="{{ homepage_video.display_poster_url }}"
-          alt="Dr. McCarthy at Sinel Specialist Hospital">
+          alt="{{ homepage_video.poster_alt|default:homepage_video.title }}">
         <span class="home-video-poster-overlay" aria-hidden="true"></span>
         <span class="home-video-play" aria-hidden="true">
           <i class="bi bi-play-fill"></i>
         </span>
-        <span class="home-video-duration">1:36 hospital tour</span>
+        {% if homepage_video.duration_label %}<span class="home-video-duration">{{ homepage_video.duration_label }}</span>{% endif %}
       </a>
     </div>
   </div>
@@ -206,9 +210,9 @@
   <div class="container">
     <div class="home-partners-heading">
       <div>
-        <span class="sinel-eyebrow">Trusted relationships</span>
-        <h2 id="home-partners-title">Working together for better care</h2>
-        <p>Organisations helping us make quality healthcare easier to access.</p>
+        <span class="sinel-eyebrow">{{ request.content.home_partners.eyebrow }}</span>
+        <h2 id="home-partners-title">{{ request.content.home_partners.title }}</h2>
+        <p>{{ request.content.home_partners.body }}</p>
       </div>
       <a href="{% url 'website:partners' %}" class="home-partners-link">
         Meet our partners
@@ -222,8 +226,8 @@
     <div class="partner-marquee-track">
       <div class="partner-marquee-group">
         {% for partner in partners %}
-          {% if partner.website %}
-          <a class="partner-marquee-item" href="{{ partner.website }}" target="_blank" rel="noopener"
+          {% if partner.public_website %}
+          <a class="partner-marquee-item" href="{{ partner.public_website }}" target="_blank" rel="noopener"
             aria-label="Visit {{ partner.name }} website">
             <img src="{{ partner.logo.url }}" alt="{{ partner.name }}">
           </a>
@@ -238,8 +242,8 @@
       {% if partners|length > 1 %}
       <div class="partner-marquee-group" aria-hidden="true">
         {% for partner in partners %}
-          {% if partner.website %}
-          <a class="partner-marquee-item" href="{{ partner.website }}" target="_blank" rel="noopener" tabindex="-1">
+          {% if partner.public_website %}
+          <a class="partner-marquee-item" href="{{ partner.public_website }}" target="_blank" rel="noopener" tabindex="-1">
             <img src="{{ partner.logo.url }}" alt="">
           </a>
           {% else %}
@@ -259,8 +263,8 @@
 <section class="page-section home-team">
   <div class="container">
     <div class="section-heading text-center">
-      <span class="sinel-eyebrow">Experienced professionals</span>
-      <h2>Meet our care team</h2>
+      <span class="sinel-eyebrow">{{ request.content.home_team.eyebrow }}</span>
+      <h2>{{ request.content.home_team.title }}</h2>
     </div>
     <div class="d-horizontal-scroll">
       <span class="control-btn previous" aria-hidden="true"><i class="bi bi-chevron-left"></i></span>
@@ -269,9 +273,9 @@
         <div class="card-doctor">
           <div class="header">
             <img src="{{ member.photo.url }}" alt="{{ member.fullname }}">
-            {% if member.linkedin %}
+            {% if member.public_linkedin_url %}
             <div class="meta">
-              <a href="{{ member.linkedin }}" target="_blank" rel="noopener"
+              <a href="{{ member.public_linkedin_url }}" target="_blank" rel="noopener"
                 aria-label="{{ member.fullname }} on LinkedIn">
                 <span class="bi bi-linkedin"></span>
               </a>
@@ -300,8 +304,8 @@
 <section class="page-section bg-light home-news">
   <div class="container">
     <div class="section-heading text-center">
-      <span class="sinel-eyebrow">Health information</span>
-      <h2>Latest from Sinel</h2>
+      <span class="sinel-eyebrow">{{ request.content.home_news.eyebrow }}</span>
+      <h2>{{ request.content.home_news.title }}</h2>
     </div>
     <div class="row mt-4">
       {% for post in posts %}

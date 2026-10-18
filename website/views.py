@@ -82,8 +82,10 @@ class GalleryView(View):
     template_name = "website/gallery.html"
 
     def get(self, request, *args, **kwargs):
+        media = Media.objects.filter(visible=True).order_by("-id")
         context = {
-            "media": Media.objects.filter(visible=True).order_by("-id"),
+            "media": media,
+            "featured": media.filter(featured=True).order_by("featured_position", "id").first() or media.first(),
         }
 
         return render(request, self.template_name, context)
@@ -113,7 +115,11 @@ class DoctorsView(View):
         specialities = list(
             dict.fromkeys(member.title for member in team_leads)
         )
-        hero_members = sorted(
+        curated = sorted(
+            (member for member in team_leads if member.featured),
+            key=lambda member: (member.featured_position, member.pk),
+        )
+        hero_members = curated[:3] if curated else sorted(
             team_leads,
             key=lambda member: (
                 0 if "mccarthy" in member.fullname.casefold() else 1,
@@ -140,6 +146,10 @@ class OurPatnersView(View):
         context = {
             "categories": categories,
             "partners": partners,
+            "hero_partners": sorted(
+                (partner for partner in partners if partner.featured),
+                key=lambda partner: (partner.featured_position, partner.pk),
+            )[:6] or partners[:6],
         }
         return render(request, self.template_name, context)
 

@@ -18,12 +18,9 @@
           <i class="bi bi-arrow-left" aria-hidden="true"></i>
           Home
         </a>
-        <span class="partners-eyebrow">Our partner network</span>
-        <h1>Better health happens together</h1>
-        <p>
-          We work with insurers, businesses and community organisations to make
-          dependable healthcare more accessible for the people we serve.
-        </p>
+        <span class="partners-eyebrow">{{ request.content.partners_intro.eyebrow }}</span>
+        <h1>{{ request.content.partners_intro.title }}</h1>
+        <p>{{ request.content.partners_intro.body }}</p>
         <div class="partners-hero-actions">
           <a href="#partner-directory" class="btn btn-light btn-lg">
             Explore our network
@@ -47,18 +44,18 @@
 
       <div class="partners-hero-panel">
         <div class="partners-hero-panel-heading">
-          <span>Trusted network</span>
+          <span>{{ request.content.partners_panel.title }}</span>
           <i class="bi bi-patch-check-fill" aria-hidden="true"></i>
         </div>
         {% if partners %}
         <div class="partners-hero-logo-grid">
-          {% for partner in partners|slice:":6" %}
+          {% for partner in hero_partners %}
           <div class="partners-hero-logo">
             <img src="{{ partner.logo.url }}" alt="{{ partner.name }}">
           </div>
           {% endfor %}
         </div>
-        <p>Supporting coordinated care, convenient access and healthier communities.</p>
+        <p>{{ request.content.partners_panel.body }}</p>
         {% else %}
         <div class="partners-hero-empty" aria-hidden="true">
           <i class="bi bi-people"></i>
@@ -73,12 +70,9 @@
 <section class="partner-directory" id="partner-directory" aria-labelledby="partner-directory-title">
   <div class="container">
     <div class="partner-directory-heading">
-      <span class="partners-eyebrow">Partner directory</span>
-      <h2 id="partner-directory-title">Organisations in our care network</h2>
-      <p>
-        Explore the organisations working with Sinel Hospital across healthcare
-        access, employee wellbeing and community support.
-      </p>
+      <span class="partners-eyebrow">{{ request.content.partners_directory.eyebrow }}</span>
+      <h2 id="partner-directory-title">{{ request.content.partners_directory.title }}</h2>
+      <p>{{ request.content.partners_directory.body }}</p>
     </div>
 
     {% if partners %}
@@ -97,8 +91,8 @@
           <div class="partner-card-grid">
             {% for partner in group.list %}
             <article class="partner-card">
-              {% if partner.website %}
-              <a class="partner-card-logo" href="{{ partner.website }}" target="_blank" rel="noopener"
+              {% if partner.public_website %}
+              <a class="partner-card-logo" href="{{ partner.public_website }}" target="_blank" rel="noopener"
                 aria-label="Visit {{ partner.name }} website">
                 <img src="{{ partner.logo.url }}" alt="{{ partner.name }}">
               </a>
@@ -114,8 +108,8 @@
                 {% if partner.description %}
                 <p>{{ partner.description }}</p>
                 {% endif %}
-                {% if partner.website %}
-                <a href="{{ partner.website }}" target="_blank" rel="noopener">
+                {% if partner.public_website %}
+                <a href="{{ partner.public_website }}" target="_blank" rel="noopener">
                   Visit website
                   <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
                 </a>
@@ -144,9 +138,9 @@
   <div class="container">
     <div class="partner-cta-card">
       <div>
-        <span class="partners-eyebrow">Work with Sinel</span>
-        <h2>Interested in becoming a partner?</h2>
-        <p>Let’s explore how we can improve access to trusted healthcare together.</p>
+        <span class="partners-eyebrow">{{ request.content.partners_cta.eyebrow }}</span>
+        <h2>{{ request.content.partners_cta.title }}</h2>
+        <p>{{ request.content.partners_cta.body }}</p>
       </div>
       <a href="{% url 'website:contact' %}" class="btn btn-light btn-lg">
         Start a conversation

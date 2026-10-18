@@ -6,12 +6,9 @@
 {% block content %}
 <section class="services-hero">
   <div class="container">
-    <span class="sinel-eyebrow">Comprehensive specialist care</span>
-    <h1>Healthcare services for every stage of life</h1>
-    <p>
-      Our experienced teams provide timely, coordinated care—from routine consultations
-      and diagnostics to specialist treatment and emergency support.
-    </p>
+    <span class="sinel-eyebrow">{{ request.content.services_intro.eyebrow }}</span>
+    <h1>{{ request.content.services_intro.title }}</h1>
+    <p>{{ request.content.services_intro.body }}</p>
     <a href="{% url 'communications:book_appointment' %}" class="btn btn-primary btn-lg">
       Request an appointment
     </a>
@@ -21,9 +18,9 @@
 <section class="page-section service-directory" aria-labelledby="service-directory-title">
   <div class="container">
     <div class="section-heading text-center">
-      <span class="sinel-eyebrow">Explore our care</span>
-      <h2 id="service-directory-title">Our services</h2>
-      <p>Select a service for schedules, specialists and detailed care information.</p>
+      <span class="sinel-eyebrow">{{ request.content.services_directory.eyebrow }}</span>
+      <h2 id="service-directory-title">{{ request.content.services_directory.title }}</h2>
+      <p>{{ request.content.services_directory.body }}</p>
     </div>
     <div class="service-card-grid">
       {% for service in services %}

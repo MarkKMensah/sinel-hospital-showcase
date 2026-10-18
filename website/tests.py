@@ -292,7 +292,7 @@ class TestViews(TestCase):
 
         response = self.client.get(reverse("website:about"))
 
-        self.assertContains(response, "Awards & Achievements")
+        self.assertContains(response, escape("Awards & Achievements"))
         self.assertContains(response, "Clinical Excellence Recognition")
         self.assertContains(response, "Healthcare Council · 2026")
         self.assertNotContains(response, "Unpublished Recognition")

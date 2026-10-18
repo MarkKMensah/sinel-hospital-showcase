@@ -1,6 +1,6 @@
 {% extends 'website/base_template.html' %}
 
-{% load static %}
+{% load static content_safety %}
 
 {% block blog_active %}active{% endblock %}
 
@@ -49,7 +49,7 @@
         <img src="{{ post.thumbnail.url }}" alt="">
       </figure>
       <div class="blog-article-content">
-        {{ post.content|safe }}
+        {{ post.content|rich_content }}
       </div>
       <footer class="blog-article-footer">
         <div class="blog-tags" aria-label="Topics">

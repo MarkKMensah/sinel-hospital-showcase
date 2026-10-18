@@ -1,0 +1,33 @@
+{% extends 'dashboard/base_template.html' %}
+{% load static %}
+{% block pagetitle %}{{ heading }}{% endblock %}
+{% block page-content-active %}mm-active{% endblock %}
+{% block content %}
+<div class="app-main__inner">
+  <div class="app-page-title"><div class="page-title-wrapper"><div class="page-title-heading"><div>
+    {{ heading }}<div class="page-title-subheading">{{ group }}</div>
+  </div></div></div></div>
+  <p><a href="{% url return_route %}">Back to {% if metadata %}search and sharing{% else %}page content{% endif %}</a></p>
+  <div class="main-card mb-4 card"><div class="card-body">
+    {% if not can_edit %}<p>This account has view-only access.</p>{% endif %}
+    {% if form.errors %}<div class="alert alert-danger" role="alert"><strong>Please review the information below.</strong>{{ form.non_field_errors }}{% for hidden in form.hidden_fields %}{{ hidden.errors }}{% endfor %}<a href="{{ request.path }}" target="_blank" rel="noopener">Open latest saved version in another tab</a></div>{% endif %}
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+      {{ form.revision_token }}
+      <fieldset{% if not can_edit %} disabled{% endif %}>
+      {% for field in form.visible_fields %}
+      <div class="form-group">
+        <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span aria-hidden="true">*</span>{% endif %}</label>
+        {{ field }}
+        {% if field.help_text %}<small class="form-text text-muted" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</small>{% endif %}
+        {% if field.field.max_length %}<small class="form-text text-muted" id="{{ field.auto_id }}_count" data-copy-counter="{{ field.id_for_label }}">{{ field.value|default_if_none:''|length }} / {{ field.field.max_length }} characters</small>{% endif %}
+        {% if field.errors %}<div class="text-danger">{{ field.errors }}</div>{% endif %}
+      </div>
+      {% endfor %}
+      {% if can_edit %}<button class="btn btn-primary" type="submit">Save changes</button>{% endif %}
+      </fieldset>
+    </form>
+  </div></div>
+</div>
+<script src="{% static 'js/page_content.js' %}?v=20261017-1"></script>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends 'dashboard/base_template.html' %}
+{% block pagetitle %}{{ title }}{% endblock %}
+{% block content %}
+<div class="app-main__inner">
+  <h1 class="h3">{{ title }}</h1>
+  <p>{{ guidance }}</p>
+  <nav class="mb-4" aria-label="Display settings">
+    {% for key, label in groups %}<a class="btn btn-light mr-2 mb-2" href="{% url 'dashboard:curation' key %}">{{ label }}</a>{% endfor %}
+  </nav>
+  <div class="card p-4">
+    <form method="get" class="mb-3"><label for="curation-search">Search</label>
+      <div class="d-flex"><input id="curation-search" class="form-control mr-2" name="q" maxlength="100" value="{{ query }}"><button class="btn btn-primary">Search</button></div>
+    </form>
+    <div class="table-responsive"><table class="table table-hover">
+      <thead><tr><th scope="col">Content</th><th scope="col">Visibility</th><th scope="col">Placement</th><th scope="col">Actions</th></tr></thead>
+      <tbody>{% for row in rows %}<tr><td>{{ row.label }}</td><td>{{ row.record.visible|yesno:'Visible,Hidden' }}</td>
+        <td>{% if kind == 'pages' %}Header: {{ row.record.show_in_header|yesno:'Yes,No' }} · Footer: {{ row.record.show_in_footer|yesno:'Yes,No' }} · Position {{ row.record.menu_position }}{% else %}Featured: {{ row.record.featured|yesno:'Yes,No' }} · Position {{ row.record.featured_position }}{% endif %}</td>
+        <td><a href="{% url 'dashboard:curation_edit' kind row.record.pk %}">Edit display</a></td></tr>
+      {% empty %}<tr><td colspan="4">No matching content.</td></tr>{% endfor %}</tbody>
+    </table></div>
+    <nav aria-label="Content pages">{% if page_obj.has_previous %}<a href="?q={{ query|urlencode }}&amp;page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+      <span class="mx-3">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}<a href="?q={{ query|urlencode }}&amp;page={{ page_obj.next_page_number }}">Next</a>{% endif %}</nav>
+  </div>
+</div>
+{% endblock %}

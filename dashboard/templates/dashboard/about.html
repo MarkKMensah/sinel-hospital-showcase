@@ -61,7 +61,9 @@
         <form method="POST" id="about-introduction-form">
           {% csrf_token %}
           <input type="hidden" name="section" value="hero">
+          <input type="hidden" name="editor_revision" value="{{ hero_form.editor_revision }}">
           {{ hero_form.non_field_errors }}
+          {% if hero_form.non_field_errors %}<a href="{% url 'dashboard:about' %}?section=hero" target="_blank" rel="noopener">Open latest saved version</a>{% endif %}
           <div class="row">
             {% for field in hero_form %}
             <div class="form-group {% if field.name == 'hero_title' or field.name == 'hero_description' or field.name == 'hero_note' %}col-12{% else %}col-md-6{% endif %}">
@@ -90,6 +92,9 @@
             <form method="POST">
               {% csrf_token %}
               <input type="hidden" name="section" value="overview">
+              <input type="hidden" name="editor_revision" value="{{ overview_form.editor_revision }}">
+              {{ overview_form.non_field_errors }}
+              {% if overview_form.non_field_errors %}<a href="{% url 'dashboard:about' %}?section=overview" target="_blank" rel="noopener">Open latest saved version</a>{% endif %}
               {{ overview_form.overview.errors }}
               {{ overview_form.overview }}
               <div class="form-group">
@@ -110,6 +115,9 @@
             <form method="POST">
               {% csrf_token %}
               <input type="hidden" name="section" value="mission">
+              <input type="hidden" name="editor_revision" value="{{ mission_form.editor_revision }}">
+              {{ mission_form.non_field_errors }}
+              {% if mission_form.non_field_errors %}<a href="{% url 'dashboard:about' %}?section=mission" target="_blank" rel="noopener">Open latest saved version</a>{% endif %}
               {{ mission_form.mission.errors }}
               {{ mission_form.mission }}
               <div class="form-group">
@@ -130,6 +138,9 @@
             <form method="POST">
               {% csrf_token %}
               <input type="hidden" name="section" value="vision">
+              <input type="hidden" name="editor_revision" value="{{ vision_form.editor_revision }}">
+              {{ vision_form.non_field_errors }}
+              {% if vision_form.non_field_errors %}<a href="{% url 'dashboard:about' %}?section=vision" target="_blank" rel="noopener">Open latest saved version</a>{% endif %}
               {{ vision_form.vision.errors }}
               {{ vision_form.vision }}
               <div class="form-group">
@@ -150,6 +161,9 @@
             <form method="POST">
               {% csrf_token %}
               <input type="hidden" name="section" value="value">
+              <input type="hidden" name="editor_revision" value="{{ value_form.editor_revision }}">
+              {{ value_form.non_field_errors }}
+              {% if value_form.non_field_errors %}<a href="{% url 'dashboard:about' %}?section=value" target="_blank" rel="noopener">Open latest saved version</a>{% endif %}
               {{ value_form.value.errors }}
               {{ value_form.value }}
               <div class="form-group">

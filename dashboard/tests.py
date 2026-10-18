@@ -1,3 +1,4 @@
+from dashboard.testing_helpers import post_editor
 from django.test import TestCase
 from django.urls import reverse
 
@@ -30,7 +31,7 @@ class BannerDashboardValidationTests(TestCase):
         )
 
     def test_dashboard_edit_updates_copy_and_can_clear_optional_text(self):
-        response = self.client.post(
+        response = post_editor(self.client,
             reverse("dashboard:create_update_banner"),
             {
                 "banner_id": self.banner.pk,
@@ -54,7 +55,7 @@ class BannerDashboardValidationTests(TestCase):
         )
 
     def test_invalid_banner_submission_preserves_copy_without_saving(self):
-        response = self.client.post(
+        response = post_editor(self.client,
             reverse("dashboard:create_update_banner"),
             {
                 "banner_id": self.banner.pk,
@@ -77,7 +78,7 @@ class BannerDashboardValidationTests(TestCase):
     def test_bad_record_ids_return_not_found_and_preserve_records(self):
         for record_id in ("invalid", "-1", "9" * 100):
             for route in ("create_update_banner", "delete_banner"):
-                response = self.client.post(
+                response = post_editor(self.client,
                     reverse(f"dashboard:{route}"), {"banner_id": record_id}
                 )
                 self.assertEqual(response.status_code, 404)
@@ -93,7 +94,7 @@ class BannerDashboardValidationTests(TestCase):
         )
         self.client.force_login(front_desk)
         for route in ("create_update_banner", "delete_banner"):
-            response = self.client.post(
+            response = post_editor(self.client,
                 reverse(f"dashboard:{route}"),
                 {"banner_id": self.banner.pk, "title": "Not permitted"},
             )
@@ -191,7 +192,7 @@ class DashboardAccessContainmentTests(TestCase):
     def test_front_desk_can_update_status_with_audit_and_notice(self):
         self.client.force_login(self.staff)
 
-        response = self.client.post(
+        response = post_editor(self.client,
             reverse(
                 "dashboard:appointment_update",
                 args=[self.latest.pk],
@@ -295,12 +296,14 @@ class EditorModernizationTests(TestCase):
 
     def test_about_editor_updates_only_selected_section(self):
         self.client.force_login(self.staff)
+        editor = self.client.get(reverse("dashboard:about"))
 
-        response = self.client.post(
+        response = post_editor(self.client,
             reverse("dashboard:about"),
             {
                 "section": "overview",
                 "overview": "<h2>Updated overview</h2>",
+                "editor_revision": editor.context["overview_form"].editor_revision,
             },
         )
 
@@ -312,7 +315,7 @@ class EditorModernizationTests(TestCase):
     def test_non_staff_user_cannot_upload_editor_files(self):
         self.client.force_login(self.regular_user)
 
-        response = self.client.post(reverse("ck_editor_5_upload_file"))
+        response = post_editor(self.client, reverse("ck_editor_5_upload_file"))
 
         self.assertEqual(response.status_code, 403)
 
@@ -360,7 +363,7 @@ class DashboardRoleAccessTests(TestCase):
 
         list_response = self.client.get(reverse("dashboard:appointments"))
         export_response = self.client.get(reverse("dashboard:appointments_export"))
-        update_response = self.client.post(
+        update_response = post_editor(self.client,
             reverse(
                 "dashboard:appointment_update",
                 args=[self.appointment.pk],
@@ -375,7 +378,7 @@ class DashboardRoleAccessTests(TestCase):
     def test_auditor_cannot_submit_content_changes(self):
         self.client.force_login(self.auditor)
 
-        response = self.client.post(
+        response = post_editor(self.client,
             reverse("dashboard:about"),
             {
                 "section": "overview",
@@ -388,7 +391,7 @@ class DashboardRoleAccessTests(TestCase):
     def test_content_manager_can_create_homepage_shortcut_with_notice(self):
         self.client.force_login(self.content_manager)
 
-        response = self.client.post(
+        response = post_editor(self.client,
             reverse("dashboard:create_update_homepage_shortcut"),
             {
                 "service": self.service.pk,
@@ -416,7 +419,7 @@ class DashboardRoleAccessTests(TestCase):
         Award.objects.all().delete()
         self.client.force_login(self.content_manager)
 
-        response = self.client.post(
+        response = post_editor(self.client,
             reverse("dashboard:create_update_award"),
             {
                 "title": "Healthcare Excellence Recognition",
@@ -439,7 +442,7 @@ class DashboardRoleAccessTests(TestCase):
         self.assertTrue(award.visible)
         self.assertContains(response, "was saved successfully")
 
-        delete_response = self.client.post(
+        delete_response = post_editor(self.client,
             reverse("dashboard:delete_award"),
             {"award_id": award.pk},
             follow=True,
@@ -453,7 +456,7 @@ class DashboardRoleAccessTests(TestCase):
         HomepageVideo.objects.all().delete()
         self.client.force_login(self.content_manager)
 
-        response = self.client.post(
+        response = post_editor(self.client,
             reverse("dashboard:create_update_homepage_video"),
             {
                 "eyebrow": "Inside Sinel",
@@ -475,7 +478,7 @@ class DashboardRoleAccessTests(TestCase):
         self.client.force_login(self.auditor)
 
         list_response = self.client.get(reverse("dashboard:homepage_content"))
-        create_response = self.client.post(
+        create_response = post_editor(self.client,
             reverse("dashboard:create_update_homepage_shortcut"),
             {
                 "service": self.service.pk,
@@ -493,7 +496,7 @@ class DashboardRoleAccessTests(TestCase):
             HomepageShortcut.objects.filter(label="Unauthorized shortcut").exists()
         )
 
-        award_response = self.client.post(
+        award_response = post_editor(self.client,
             reverse("dashboard:create_update_award"),
             {
                 "title": "Unauthorized recognition",
@@ -590,7 +593,7 @@ class TeamLeadVisibilityTests(TestCase):
                 )
 
     def test_unchecked_toggle_hides_member_from_all_public_team_views(self):
-        response = self.client.post(
+        response = post_editor(self.client,
             reverse("dashboard:create_update_team_lead"),
             self.member_data(self.visible_member),
             follow=True,
@@ -625,7 +628,7 @@ class TeamLeadVisibilityTests(TestCase):
         self.assertNotContains(service_response, self.visible_member.fullname)
 
     def test_checked_toggle_makes_hidden_member_public(self):
-        response = self.client.post(
+        response = post_editor(self.client,
             reverse("dashboard:create_update_team_lead"),
             self.member_data(self.hidden_member, visible=True),
             follow=True,
@@ -648,24 +651,24 @@ class TeamLeadVisibilityTests(TestCase):
         data["bio"] = "Updated biography awaiting a correction."
         data["linkedin"] = "not-a-valid-url"
 
-        response = self.client.post(
+        response = post_editor(self.client,
             reverse("dashboard:create_update_team_lead"),
             data,
         )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'value="Dr Revised Member"')
-        self.assertContains(response, data["bio"])
-        self.assertContains(response, 'value="not-a-valid-url"')
-        self.assertContains(response, "Enter a valid URL.")
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(response, 'value="Dr Revised Member"', status_code=400)
+        self.assertContains(response, data["bio"], status_code=400)
+        self.assertContains(response, 'value="not-a-valid-url"', status_code=400)
+        self.assertContains(response, "Enter a valid URL.", status_code=400)
         self.assertFalse(response.context["form"]["visible"].value())
-        self.assertNotContains(response, 'name="visible" id="visible" checked')
+        self.assertNotContains(response, 'name="visible" id="visible" checked', status_code=400)
         self.visible_member.refresh_from_db()
         self.assertEqual(self.visible_member.fullname, "Dr Visible Member")
         self.assertTrue(self.visible_member.visible)
 
     def test_invalid_new_member_shows_photo_error_and_keeps_visible_choice(self):
-        response = self.client.post(
+        response = post_editor(self.client,
             reverse("dashboard:create_update_team_lead"),
             {
                 "fullname": "Dr New Member",
@@ -675,10 +678,10 @@ class TeamLeadVisibilityTests(TestCase):
             },
         )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 400)
         self.assertIn("photo", response.context["form"].errors)
-        self.assertContains(response, 'value="Dr New Member"')
-        self.assertContains(response, 'name="visible" id="visible" checked')
+        self.assertContains(response, 'value="Dr New Member"', status_code=400)
+        self.assertContains(response, 'name="visible" id="visible" checked', status_code=400)
         self.assertFalse(TeamLead.objects.filter(fullname="Dr New Member").exists())
 
     def test_invalid_or_missing_member_id_returns_not_found(self):
@@ -691,7 +694,7 @@ class TeamLeadVisibilityTests(TestCase):
                 )
                 data = self.member_data(self.visible_member)
                 data["team_lead_id"] = member_id
-                self.assertEqual(self.client.post(url, data).status_code, 404)
+                self.assertEqual(post_editor(self.client, url, data).status_code, 404)
 
     def test_front_desk_cannot_change_team_visibility(self):
         front_desk = create_user(
@@ -701,7 +704,7 @@ class TeamLeadVisibilityTests(TestCase):
         )
         self.client.force_login(front_desk)
 
-        response = self.client.post(
+        response = post_editor(self.client,
             reverse("dashboard:create_update_team_lead"),
             self.member_data(self.visible_member),
         )

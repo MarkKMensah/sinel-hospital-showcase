@@ -1,9 +1,11 @@
 import csv
+from urllib.parse import urlencode
 
 from django.shortcuts import get_object_or_404, redirect, render
 from django.db import transaction
 from django.db.models import Q
 from django.http import Http404, HttpResponse
+from django.forms import FileField
 from django.urls import reverse
 from django.views.generic import View
 from django.utils.decorators import method_decorator
@@ -38,8 +40,10 @@ from website.forms import (
     AboutOverviewForm,
     AboutValueForm,
     AboutVisionForm,
+    AlbumForm,
     AwardForm,
     BannerForm,
+    ContactForm,
     HomepageShortcutForm,
     HomepageVideoForm,
     MediaForm,
@@ -49,10 +53,113 @@ from website.forms import (
     TeamLeadForm,
     TestimonialForm,
 )
-from django.utils.html import strip_tags
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from accounts.models import Administrator
+from .editor_state import (
+    CONFLICT_MESSAGE,
+    TOKEN_FIELD,
+    editor_instance,
+    locked_editor_instance,
+    revision_matches,
+    revision_token,
+)
+
+
+class ContentEditorView(View):
+    """Bound editor forms with field-scoped conflict checks and safe recovery."""
+
+    singleton = False
+    author_field = None
+    derived_fields = ()
+
+    def success_message(self, saved):
+        return "Changes saved successfully."
+
+    def context(self, instance, form, token=None):
+        if form.is_bound and instance is not None and instance.pk:
+            # ModelForm validation/save may replace its in-memory asset reference
+            # before persistence succeeds. Only show the durable current asset.
+            current = self.model_class.objects.filter(pk=instance.pk).first()
+            if current is not None:
+                instance = current
+                form.instance = current
+                for name, field in form.fields.items():
+                    if isinstance(field, FileField):
+                        form.initial[name] = getattr(current, name)
+                        form[name].initial = getattr(current, name)
+        for field in form.fields.values():
+            if not hasattr(field.widget, "config_name"):
+                field.widget.attrs.setdefault("class", "form-check-input" if getattr(field.widget, "input_type", None) == "checkbox" else "form-control")
+        reload_url = self.request.path
+        if instance is not None and instance.pk and not self.singleton:
+            reload_url += "?" + urlencode({self.object_id_field: instance.pk})
+        return {
+            self.context_name: instance,
+            "form": form,
+            "editor_revision": token if token is not None else revision_token(
+                self.model_class, instance, form.fields
+            ),
+            "editor_reload_url": reload_url,
+        }
+
+    @method_decorator(staff_only())
+    def get(self, request, *args, **kwargs):
+        instance = (
+            self.model_class.objects.first()
+            if self.singleton else editor_instance(
+                self.model_class, request.GET.get(self.object_id_field)
+            )
+        )
+        return render(request, self.template_name, self.context(
+            instance, self.form_class(instance=instance)
+        ))
+
+    @method_decorator(staff_only())
+    def post(self, request, *args, **kwargs):
+        object_id = request.POST.get(self.object_id_field)
+        token = request.POST.get(TOKEN_FIELD, "")
+        form = None
+        instance = None
+        try:
+            with locked_editor_instance(
+                self.model_class, object_id, singleton=self.singleton
+            ) as instance:
+                form = self.form_class(request.POST, request.FILES or None, instance=instance)
+                revision_fields = self.form_class(instance=instance).fields
+                if not revision_matches(token, self.model_class, instance, revision_fields):
+                    form.is_valid()
+                    form.add_error(None, CONFLICT_MESSAGE)
+                    return render(request, self.template_name, self.context(instance, form, token), status=409)
+                if not form.is_valid():
+                    return render(request, self.template_name, self.context(instance, form, token), status=400)
+                saved = form.save(commit=False)
+                if self.author_field and instance is None:
+                    setattr(saved, self.author_field, request.user)
+                if instance is not None:
+                    owned_fields = {
+                        name for name in form.fields
+                        if not self.model_class._meta.get_field(name).many_to_many
+                    }
+                    saved.save(update_fields=owned_fields | set(self.derived_fields) | {"updated_at"})
+                else:
+                    saved.save()
+                form.save_m2m()
+        except OSError:
+            if form is None:
+                raise
+            # Query/re-render only after the atomic block has rolled back.
+            form.add_error(None, (
+                "The file could not be stored. No content changes were saved. "
+                "Existing files are unchanged. Select the replacement again and try again."
+            ))
+            return render(
+                request, self.template_name, self.context(instance, form, token), status=503
+            )
+        messages.success(request, self.success_message(saved))
+        if self.context_name == "media":
+            return redirect("dashboard:album", album_id=saved.album_id)
+        return redirect(self.success_url_name)
 
 
 def filtered_appointments(request):
@@ -120,7 +227,7 @@ class AboutView(View):
         "value": AboutValueForm,
     }
 
-    def get_context(self, about, bound_form=None, section=None):
+    def get_context(self, about, bound_form=None, section=None, token=None):
         section_forms = {
             name: (
                 bound_form
@@ -129,6 +236,11 @@ class AboutView(View):
             )
             for name, form_class in self.form_classes.items()
         }
+        for name, form in section_forms.items():
+            form.editor_revision = (
+                token if name == section and token is not None
+                else revision_token(About, about, form.fields)
+            )
         editor_media = section_forms["overview"].media
         for name in ("mission", "vision", "value"):
             editor_media += section_forms[name].media
@@ -145,7 +257,7 @@ class AboutView(View):
 
     @method_decorator(staff_only())
     def get(self, request, *argd, **kwargs):
-        about = About.objects.first() or About()
+        about = About.objects.order_by("pk").first() or About()
         section = request.GET.get("section", "hero")
         if section not in self.form_classes:
             section = "hero"
@@ -161,17 +273,21 @@ class AboutView(View):
             messages.error(request, "Choose a valid About section.")
             return redirect("dashboard:about")
 
-        about = About.objects.first() or About()
-        form = form_class(request.POST, instance=about)
-        if not form.is_valid():
-            return render(
-                request,
-                self.template_name,
-                self.get_context(about, bound_form=form, section=section),
-                status=400,
-            )
-
-        form.save()
+        token = request.POST.get(TOKEN_FIELD, "")
+        with locked_editor_instance(About, singleton=True) as about:
+            about = about or About()
+            form = form_class(request.POST, instance=about)
+            valid_revision = revision_matches(token, About, about, form.fields)
+            valid_form = form.is_valid()
+            if not valid_revision or not valid_form:
+                if not valid_revision:
+                    form.add_error(None, CONFLICT_MESSAGE)
+                return render(
+                    request, self.template_name,
+                    self.get_context(about, bound_form=form, section=section, token=token),
+                    status=409 if not valid_revision else 400,
+                )
+            form.save()
         label = "Page introduction" if section == "hero" else section.title()
         messages.success(request, f"{label} updated successfully.")
         return redirect(reverse("dashboard:about") + "?section=" + section)
@@ -189,53 +305,16 @@ class AwardsView(View):
         )
 
 
-class CreateUpdateAwardView(View):
+class CreateUpdateAwardView(ContentEditorView):
     template_name = "dashboard/create_update_award.html"
+    form_class = AwardForm
+    model_class = Award
+    object_id_field = "award_id"
+    context_name = "award"
+    success_url_name = "dashboard:awards"
 
-    @method_decorator(staff_only())
-    def get(self, request, *args, **kwargs):
-        award_id = request.GET.get("award_id")
-        award = (
-            get_object_or_404(Award, id=award_id)
-            if award_id
-            else None
-        )
-        return render(
-            request,
-            self.template_name,
-            {
-                "award": award,
-                "form": AwardForm(instance=award),
-            },
-        )
-
-    @method_decorator(staff_only())
-    def post(self, request, *args, **kwargs):
-        award_id = request.POST.get("award_id")
-        award = (
-            get_object_or_404(Award, id=award_id)
-            if award_id
-            else None
-        )
-        form = AwardForm(
-            request.POST,
-            request.FILES or None,
-            instance=award,
-        )
-        if not form.is_valid():
-            return render(
-                request,
-                self.template_name,
-                {"award": award, "form": form},
-                status=400,
-            )
-
-        saved_award = form.save()
-        messages.success(
-            request,
-            f'Award "{saved_award.title}" was saved successfully.',
-        )
-        return redirect("dashboard:awards")
+    def success_message(self, saved):
+        return f'Award "{saved.title}" was saved successfully.'
 
 
 class DeleteAwardView(View):
@@ -254,36 +333,14 @@ class DeleteAwardView(View):
         return redirect("dashboard:awards")
 
 
-class ContactView(View):
+class ContactView(ContentEditorView):
     template_name = "dashboard/contact.html"
-
-    @method_decorator(staff_only())
-    def get(self, request, *argd, **kwargs):
-        context = {"contact": Contact.objects.first()}
-        return render(request, self.template_name, context)
-
-    @method_decorator(staff_only())
-    def post(self, request, *args, **kwargs):
-        email = request.POST.get("email")
-        gps = request.POST.get("gps")
-        address = request.POST.get("address")
-        telephone = request.POST.get("telephone")
-        lat_lng = request.POST.get("lat_lng")
-
-        contact = Contact.objects.first()
-
-        if email:
-            contact.email = email
-        if gps:
-            contact.gps = gps
-        if address:
-            contact.address = address
-        if telephone:
-            contact.telephone = telephone
-        if lat_lng:
-            contact.lat_lng = lat_lng
-        contact.save()
-        return redirect_back(request, "dashboard:index")
+    form_class = ContactForm
+    model_class = Contact
+    context_name = "contact"
+    object_id_field = "contact_id"
+    singleton = True
+    success_url_name = "dashboard:contact"
 
 
 class GalleryView(View):
@@ -305,27 +362,13 @@ class AlbumView(View):
         return render(request, self.template_name, context)
 
 
-class CreateUpdateAlbum(View):
+class CreateUpdateAlbum(ContentEditorView):
     template_name = "dashboard/create_update_album.html"
-
-    @method_decorator(staff_only())
-    def get(self, request, *argd, **kwargs):
-        album_id = request.GET.get("album_id", -1)
-        context = {"album": Album.objects.filter(id=album_id).first()}
-        return render(request, self.template_name, context)
-
-    @method_decorator(staff_only())
-    def post(self, request, *argd, **kwargs):
-        album_id = request.POST.get("album_id") or None
-        name = request.POST.get("name")
-        service = Album.objects.filter(id=album_id).first()
-        if service:
-            # Update
-            service.name = name
-            service.save()
-        else:
-            Album.objects.create(name=name)
-        return redirect("dashboard:gallery")
+    form_class = AlbumForm
+    model_class = Album
+    object_id_field = "album_id"
+    context_name = "album"
+    success_url_name = "dashboard:gallery"
 
 
 class DeleteAlbumView(View):
@@ -336,38 +379,12 @@ class DeleteAlbumView(View):
         return redirect_back(request, "dashboard:index")
 
 
-class CreateUpdateMedia(View):
+class CreateUpdateMedia(ContentEditorView):
     template_name = "dashboard/create_update_media.html"
     form_class = MediaForm
     model_class = Media
     object_id_field = "media_id"
-
-    @method_decorator(staff_only())
-    def get(self, request, *argd, **kwargs):
-        media_id = request.GET.get("media_id", -1) or None
-        context = {
-            "albums": Album.objects.all(),
-            "media": Media.objects.filter(id=media_id).first(),
-        }
-        return render(request, self.template_name, context)
-
-    @method_decorator(staff_only())
-    def post(self, request, *argd, **kwargs):
-        object_id = request.POST.get(self.object_id_field) or None
-        instance = None
-        if object_id:
-            instance = get_object_or_404(self.model_class, id=object_id)
-        form = self.form_class(request.POST,
-                               request.FILES or None,
-                               instance=instance)
-        if form.is_valid():
-            media = form.save()
-        else:
-            for field, er in form.errors.items():
-                message = f"{field.title()}: {strip_tags(er)}"
-                messages.add_message(request, messages.ERROR, message)
-            return redirect_back(request, "dashboard:index")
-        return redirect(to="dashboard:album", album_id=media.album.id)
+    context_name = "media"
 
 
 class DeleteMediaView(View):
@@ -387,50 +404,19 @@ class ServicesView(View):
         return render(request, self.template_name, context)
 
 
-class CreateUpdateService(View):
+class CreateUpdateService(ContentEditorView):
     template_name = "dashboard/create_update_service.html"
     form_class = ServiceForm
     model_class = Service
     object_id_field = "service_id"
+    context_name = "service"
+    success_url_name = "dashboard:services"
 
     def get_instance(self, object_id):
-        if not object_id:
-            return None
-        try:
-            object_id = int(object_id)
-        except (TypeError, ValueError):
-            raise Http404("Service not found.")
-        if not 1 <= object_id <= 9223372036854775807:
-            raise Http404("Service not found.")
-        return get_object_or_404(self.model_class, pk=object_id)
+        return editor_instance(self.model_class, object_id)
 
-    @method_decorator(staff_only())
-    def get(self, request, *argd, **kwargs):
-        service = self.get_instance(request.GET.get(self.object_id_field))
-        form = self.form_class(instance=service)
-        context = {
-            "service": service,
-            "form": form,
-        }
-        return render(request, self.template_name, context)
-
-    @method_decorator(staff_only())
-    def post(self, request, *argd, **kwargs):
-        instance = self.get_instance(request.POST.get(self.object_id_field))
-        form = self.form_class(request.POST,
-                               request.FILES or None,
-                               instance=instance)
-        if form.is_valid():
-            with transaction.atomic():
-                service = form.save()
-            messages.success(request, f"{service.title} was saved successfully.")
-            return redirect("dashboard:services")
-        return render(
-            request,
-            self.template_name,
-            {"service": instance, "form": form},
-            status=400,
-        )
+    def success_message(self, saved):
+        return f"{saved.title} was saved successfully."
 
 
 class DeleteServiceView(View):
@@ -450,51 +436,20 @@ class TeamLeadsView(View):
         return render(request, self.template_name, context)
 
 
-class CreateUpdateTeamLead(View):
+class CreateUpdateTeamLead(ContentEditorView):
     template_name = "dashboard/create_update_team_lead.html"
     form_class = TeamLeadForm
     model_class = TeamLead
     object_id_field = "team_lead_id"
+    context_name = "team_lead"
+    success_url_name = "dashboard:team_leads"
 
     def get_instance(self, object_id):
-        if not object_id:
-            return None
-        try:
-            object_id = int(object_id)
-        except (TypeError, ValueError):
-            raise Http404("Team lead not found.")
-        if not 1 <= object_id <= 9223372036854775807:
-            raise Http404("Team lead not found.")
-        return get_object_or_404(self.model_class, id=object_id)
+        return editor_instance(self.model_class, object_id)
 
-    @method_decorator(staff_only())
-    def get(self, request, *argd, **kwargs):
-        instance = self.get_instance(request.GET.get(self.object_id_field))
-        context = {
-            "team_lead": instance,
-            "form": self.form_class(instance=instance),
-        }
-        return render(request, self.template_name, context)
-
-    @method_decorator(staff_only())
-    def post(self, request, *argd, **kwargs):
-        instance = self.get_instance(request.POST.get(self.object_id_field))
-        form = self.form_class(request.POST,
-                               request.FILES or None,
-                               instance=instance)
-        if form.is_valid():
-            team_lead = form.save()
-            visibility = "visible" if team_lead.visible else "hidden"
-            messages.success(
-                request,
-                f"{team_lead.fullname} was saved successfully and is {visibility} on the website.",
-            )
-            return redirect("dashboard:team_leads")
-        return render(
-            request,
-            self.template_name,
-            {"team_lead": instance, "form": form},
-        )
+    def success_message(self, saved):
+        visibility = "visible" if saved.visible else "hidden"
+        return f"{saved.fullname} was saved successfully and is {visibility} on the website."
 
 
 class DeleteTeamLeadView(View):
@@ -526,57 +481,20 @@ class BannersView(HomepageContentView):
     """Keep the original banner URL working as a homepage CMS alias."""
 
 
-class CreateUpdateBannerView(View):
+class CreateUpdateBannerView(ContentEditorView):
     template_name = "dashboard/create_update_banner.html"
+    form_class = BannerForm
+    model_class = Banner
+    object_id_field = "banner_id"
+    context_name = "banner"
+    success_url_name = "dashboard:homepage_content"
 
     @staticmethod
     def get_instance(banner_id):
-        if not banner_id:
-            return None
-        try:
-            banner_id = int(banner_id)
-        except (ValueError, TypeError):
-            raise Http404("Banner not found.")
-        if not 1 <= banner_id <= 9223372036854775807:
-            raise Http404("Banner not found.")
-        return get_object_or_404(Banner, id=banner_id)
+        return editor_instance(Banner, banner_id)
 
-    @method_decorator(staff_only())
-    def get(self, request, *args, **kwargs):
-        banner_id = request.GET.get("banner_id")
-        banner = self.get_instance(banner_id)
-        return render(
-            request,
-            self.template_name,
-            {
-                "banner": banner,
-                "form": BannerForm(instance=banner),
-            },
-        )
-
-    @method_decorator(staff_only())
-    def post(self, request, *args, **kwargs):
-        banner_id = request.POST.get("banner_id")
-        banner = self.get_instance(banner_id)
-        form = BannerForm(
-            request.POST,
-            request.FILES or None,
-            instance=banner,
-        )
-        if not form.is_valid():
-            return render(
-                request,
-                self.template_name,
-                {"banner": banner, "form": form},
-                status=400,
-            )
-
-        saved_banner = form.save()
-        messages.success(
-            request,
-            f'Homepage banner "{saved_banner.title}" was saved successfully.',
-        )
-        return redirect("dashboard:homepage_content")
+    def success_message(self, saved):
+        return f'Homepage banner "{saved.title}" was saved successfully.'
 
 
 class DeleteBannerView(View):
@@ -594,52 +512,16 @@ class DeleteBannerView(View):
         return redirect("dashboard:homepage_content")
 
 
-class CreateUpdateHomepageShortcutView(View):
+class CreateUpdateHomepageShortcutView(ContentEditorView):
     template_name = "dashboard/create_update_homepage_shortcut.html"
+    form_class = HomepageShortcutForm
+    model_class = HomepageShortcut
+    object_id_field = "shortcut_id"
+    context_name = "shortcut"
+    success_url_name = "dashboard:homepage_content"
 
-    @method_decorator(staff_only())
-    def get(self, request, *args, **kwargs):
-        shortcut_id = request.GET.get("shortcut_id")
-        shortcut = (
-            get_object_or_404(HomepageShortcut, id=shortcut_id)
-            if shortcut_id
-            else None
-        )
-        return render(
-            request,
-            self.template_name,
-            {
-                "shortcut": shortcut,
-                "form": HomepageShortcutForm(instance=shortcut),
-            },
-        )
-
-    @method_decorator(staff_only())
-    def post(self, request, *args, **kwargs):
-        shortcut_id = request.POST.get("shortcut_id")
-        shortcut = (
-            get_object_or_404(HomepageShortcut, id=shortcut_id)
-            if shortcut_id
-            else None
-        )
-        form = HomepageShortcutForm(request.POST, instance=shortcut)
-        if not form.is_valid():
-            return render(
-                request,
-                self.template_name,
-                {"shortcut": shortcut, "form": form},
-                status=400,
-            )
-
-        saved_shortcut = form.save()
-        messages.success(
-            request,
-            (
-                f'Homepage shortcut "{saved_shortcut.display_label}" '
-                "was saved successfully."
-            ),
-        )
-        return redirect("dashboard:homepage_content")
+    def success_message(self, saved):
+        return f'Homepage shortcut "{saved.display_label}" was saved successfully.'
 
 
 class DeleteHomepageShortcutView(View):
@@ -658,46 +540,17 @@ class DeleteHomepageShortcutView(View):
         return redirect("dashboard:homepage_content")
 
 
-class CreateUpdateHomepageVideoView(View):
+class CreateUpdateHomepageVideoView(ContentEditorView):
     template_name = "dashboard/create_update_homepage_video.html"
+    form_class = HomepageVideoForm
+    model_class = HomepageVideo
+    object_id_field = "homepage_video_id"
+    context_name = "homepage_video"
+    singleton = True
+    success_url_name = "dashboard:homepage_content"
 
-    @method_decorator(staff_only())
-    def get(self, request, *args, **kwargs):
-        homepage_video = HomepageVideo.objects.first()
-        return render(
-            request,
-            self.template_name,
-            {
-                "homepage_video": homepage_video,
-                "form": HomepageVideoForm(instance=homepage_video),
-            },
-        )
-
-    @method_decorator(staff_only())
-    def post(self, request, *args, **kwargs):
-        homepage_video = HomepageVideo.objects.first()
-        form = HomepageVideoForm(
-            request.POST,
-            request.FILES or None,
-            instance=homepage_video,
-        )
-        if not form.is_valid():
-            return render(
-                request,
-                self.template_name,
-                {
-                    "homepage_video": homepage_video,
-                    "form": form,
-                },
-                status=400,
-            )
-
-        saved_video = form.save()
-        messages.success(
-            request,
-            f'Homepage video "{saved_video.title}" was saved successfully.',
-        )
-        return redirect("dashboard:homepage_content")
+    def success_message(self, saved):
+        return f'Homepage video "{saved.title}" was saved successfully.'
 
 
 class DeleteHomepageVideoView(View):
@@ -735,41 +588,14 @@ class PostsView(View):
         return render(request, self.template_name, context)
 
 
-class CreateUpdatePostView(View):
+class CreateUpdatePostView(ContentEditorView):
     template_name = "dashboard/create_update_post.html"
     form_class = PostForm
     model_class = Post
     object_id_field = "post_id"
-
-    @method_decorator(staff_only())
-    def get(self, request, *argd, **kwargs):
-        post_id = request.GET.get("post_id", -1)
-        post = self.model_class.objects.filter(id=post_id).first()
-        context = {
-            "post": post,
-            "form": self.form_class(instance=post),
-        }
-        return render(request, self.template_name, context)
-
-    @method_decorator(staff_only())
-    def post(self, request, *argd, **kwargs):
-        object_id = request.POST.get(self.object_id_field) or None
-        instance = None
-        if object_id:
-            instance = get_object_or_404(self.model_class, id=object_id)
-        form = self.form_class(request.POST,
-                               request.FILES or None,
-                               instance=instance)
-        if form.is_valid():
-            post = form.save(commit=False)
-            post.by = request.user
-            post.save()
-        else:
-            for field, er in form.errors.items():
-                message = f"{field.title()}: {strip_tags(er)}"
-                messages.add_message(request, messages.ERROR, message)
-            return redirect_back(request, "dashboard:index")
-        return redirect("dashboard:posts")
+    context_name = "post"
+    author_field = "by"
+    success_url_name = "dashboard:posts"
 
 
 class DeletePostView(View):
@@ -945,42 +771,14 @@ class TestimonialsView(View):
         return render(request, self.template_name, context)
 
 
-class CreateUpdateTestimonial(View):
+class CreateUpdateTestimonial(ContentEditorView):
     template_name = "dashboard/create_update_testimonial.html"
     form_class = TestimonialForm
     model_class = Testimonial
     object_id_field = "testimonial_id"
-
-    @method_decorator(staff_only())
-    def get(self, request, *argd, **kwargs):
-        testimonial_id = request.GET.get("testimonial_id", -1)
-        context = {
-            "services": Service.objects.filter(visible=True),
-            "doctors": TeamLead.objects.filter(visible=True),
-            "testimonial":
-            Testimonial.objects.filter(id=testimonial_id).first()
-        }
-        return render(request, self.template_name, context)
-
-    @method_decorator(staff_only())
-    def post(self, request, *argd, **kwargs):
-        object_id = request.POST.get(self.object_id_field) or None
-        instance = None
-        if object_id:
-            instance = get_object_or_404(self.model_class, id=object_id)
-        form = self.form_class(request.POST,
-                               request.FILES or None,
-                               instance=instance)
-        if form.is_valid():
-            testimonial = form.save(commit=False)
-            testimonial.added_by = request.user
-            testimonial.save()
-        else:
-            for field, er in form.errors.items():
-                message = f"{field.title()}: {strip_tags(er)}"
-                messages.add_message(request, messages.ERROR, message)
-            return redirect_back(request, "dashboard:index")
-        return redirect("dashboard:testimonials")
+    context_name = "testimonial"
+    author_field = "added_by"
+    success_url_name = "dashboard:testimonials"
 
 
 class DeleteTestimonialView(View):
@@ -1000,35 +798,13 @@ class PartnersView(View):
         return render(request, self.template_name, context)
 
 
-class CreateUpdatePartner(View):
+class CreateUpdatePartner(ContentEditorView):
     template_name = "dashboard/create_update_partner.html"
     form_class = PartnerForm
     model_class = Partner
     object_id_field = "partner_id"
-
-    @method_decorator(staff_only())
-    def get(self, request, *argd, **kwargs):
-        partner_id = request.GET.get("partner_id", -1)
-        context = {"partner": Partner.objects.filter(id=partner_id).first()}
-        return render(request, self.template_name, context)
-
-    @method_decorator(staff_only())
-    def post(self, request, *argd, **kwargs):
-        object_id = request.POST.get(self.object_id_field) or None
-        instance = None
-        if object_id:
-            instance = get_object_or_404(self.model_class, id=object_id)
-        form = self.form_class(request.POST,
-                               request.FILES or None,
-                               instance=instance)
-        if form.is_valid():
-            form.save()
-        else:
-            for field, er in form.errors.items():
-                message = f"{field.title()}: {strip_tags(er)}"
-                messages.add_message(request, messages.ERROR, message)
-            return redirect_back(request, "dashboard:index")
-        return redirect("dashboard:partners")
+    context_name = "partner"
+    success_url_name = "dashboard:partners"
 
 
 class DeletePartnerView(View):
@@ -1048,41 +824,15 @@ class PagesView(View):
         return render(request, self.template_name, context)
 
 
-class CreateUpdatePageView(View):
+class CreateUpdatePageView(ContentEditorView):
     template_name = "dashboard/create_update_page.html"
     form_class = PageForm
     model_class = Page
     object_id_field = "page_id"
-
-    @method_decorator(staff_only())
-    def get(self, request, *argd, **kwargs):
-        page_id = request.GET.get("page_id", -1)
-        page = self.model_class.objects.filter(id=page_id).first()
-        context = {
-            "page": page,
-            "form": self.form_class(instance=page),
-        }
-        return render(request, self.template_name, context)
-
-    @method_decorator(staff_only())
-    def post(self, request, *argd, **kwargs):
-        object_id = request.POST.get(self.object_id_field) or None
-        instance = None
-        if object_id:
-            instance = get_object_or_404(self.model_class, id=object_id)
-        form = self.form_class(request.POST,
-                               request.FILES or None,
-                               instance=instance)
-        if form.is_valid():
-            page = form.save(commit=False)
-            page.by = request.user
-            page.save()
-        else:
-            for field, er in form.errors.items():
-                message = f"{field.title()}: {strip_tags(er)}"
-                messages.add_message(request, messages.ERROR, message)
-            return redirect_back(request, "dashboard:index")
-        return redirect("dashboard:pages")
+    context_name = "page"
+    author_field = "by"
+    success_url_name = "dashboard:pages"
+    derived_fields = ("slug",)
 
 
 class DeletePageView(View):
@@ -1102,36 +852,14 @@ class NotificationsView(View):
         return render(request, self.template_name, context)
 
 
-class CreateUpdateNotificationView(View):
+class CreateUpdateNotificationView(ContentEditorView):
     template_name = "dashboard/create_update_notification.html"
     form_class = NotificationForm
     model_class = Notification
     object_id_field = "notification_id"
-
-    @method_decorator(staff_only())
-    def get(self, request, *argd, **kwargs):
-        notification_id = request.GET.get("notification_id", -1)
-        context = {
-            "notification":
-            self.model_class.objects.filter(id=notification_id).first()
-        }
-        return render(request, self.template_name, context)
-
-    @method_decorator(staff_only())
-    def post(self, request, *argd, **kwargs):
-        object_id = request.POST.get(self.object_id_field) or None
-        instance = None
-        if object_id:
-            instance = get_object_or_404(self.model_class, id=object_id)
-        form = self.form_class(request.POST, instance=instance)
-        if form.is_valid():
-            form.save()
-        else:
-            for field, er in form.errors.items():
-                message = f"{field.title()}: {strip_tags(er)}"
-                messages.add_message(request, messages.ERROR, message)
-            return redirect_back(request, "dashboard:index")
-        return redirect("dashboard:notifications")
+    context_name = "notification"
+    success_url_name = "dashboard:notifications"
+    derived_fields = ("content_hash",)
 
 
 class DeleteNotificationView(View):

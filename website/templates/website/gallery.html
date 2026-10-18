@@ -9,7 +9,6 @@
 {% endblock %}
 
 {% block content %}
-{% with featured=media|first %}
 <section class="gallery-hero">
   <div class="gallery-hero-shape gallery-hero-shape-one" aria-hidden="true"></div>
   <div class="gallery-hero-shape gallery-hero-shape-two" aria-hidden="true"></div>
@@ -19,12 +18,9 @@
         <a class="gallery-breadcrumb" href="{% url 'website:index' %}">
           <i class="bi bi-arrow-left"></i> Home
         </a>
-        <span class="gallery-eyebrow">Our Gallery</span>
-        <h1>Inside Sinel</h1>
-        <p>
-          Meet the people, facilities and everyday moments behind the
-          compassionate specialist care we provide.
-        </p>
+        <span class="gallery-eyebrow">{{ request.content.gallery_intro.eyebrow }}</span>
+        <h1>{{ request.content.gallery_intro.title }}</h1>
+        <p>{{ request.content.gallery_intro.body }}</p>
         <div class="gallery-hero-actions">
           <a href="#gallery-collection" class="btn btn-light btn-lg">
             Explore the gallery <i class="bi bi-arrow-down ml-2"></i>
@@ -37,7 +33,8 @@
       <div class="col-lg-6">
         <div class="gallery-hero-visual">
           {% if featured %}
-          <img src="{{ featured.file.url }}" alt="{{ featured.display_name }}">
+          <img src="{{ featured.file.url }}" alt="{{ featured.alternative_text|default:featured.display_name }}">
+          {% if featured.credit %}<small class="gallery-cover-credit">{{ featured.credit }}</small>{% endif %}
           {% else %}
           <img src="{% static 'img/bg_image_1.jpg' %}" alt="Sinel Hospital care team">
           {% endif %}
@@ -58,17 +55,14 @@
     </div>
   </div>
 </section>
-{% endwith %}
 
 <section class="gallery-collection" id="gallery-collection" aria-labelledby="gallery-title">
   <div class="container">
     <div class="gallery-collection-heading">
       <div>
-        <span class="gallery-eyebrow">A closer look</span>
-        <h2 id="gallery-title">People and places at Sinel</h2>
-        <p>
-          Select any photograph to see it in a larger, distraction-free view.
-        </p>
+        <span class="gallery-eyebrow">{{ request.content.gallery_collection.eyebrow }}</span>
+        <h2 id="gallery-title">{{ request.content.gallery_collection.title }}</h2>
+        <p>{{ request.content.gallery_collection.body }}</p>
       </div>
       {% if media %}
       <span class="gallery-count">
@@ -85,8 +79,9 @@
         class="gallery-card work-box{% if forloop.first %} gallery-card--feature{% elif forloop.counter|divisibleby:'5' %} gallery-card--wide{% endif %}"
         aria-label="View {{ item.display_name }}"
         data-gallery-title="{{ item.display_name }}"
-        data-gallery-caption="{{ item.description|default:item.display_name }}">
-        <img src="{{ item.file.url }}" alt="{{ item.display_name }}"
+        data-gallery-caption="{{ item.description|default:item.display_name }}"
+        data-gallery-credit="{{ item.credit }}">
+        <img src="{{ item.file.url }}" alt="{{ item.alternative_text|default:item.display_name }}"
           {% if not forloop.first %}loading="lazy"{% endif %}>
         <span class="gallery-card-overlay" aria-hidden="true"></span>
         <span class="gallery-card-expand" aria-hidden="true">
@@ -98,6 +93,7 @@
           {% if item.description %}
           <span>{{ item.description }}</span>
           {% endif %}
+          {% if item.credit %}<small>{{ item.credit }}</small>{% endif %}
         </span>
       </a>
       {% endfor %}
@@ -140,6 +136,7 @@
       <div>
         <strong class="gallery-lightbox__title"></strong>
         <p class="gallery-lightbox__caption" aria-live="polite"></p>
+        <small class="gallery-lightbox__credit" hidden></small>
       </div>
       <span class="gallery-lightbox__counter"></span>
     </div>
@@ -148,5 +145,5 @@
 {% endblock %}
 
 {% block scriptblock %}
-<script src="{% static 'js/gallery_lightbox.js' %}?v=20260729-2"></script>
+<script src="{% static 'js/gallery_lightbox.js' %}?v=20261017-1"></script>
 {% endblock %}

@@ -18,17 +18,16 @@
           <i class="bi bi-arrow-left" aria-hidden="true"></i>
           Home
         </a>
-        <span class="public-page-eyebrow">Contact Sinel</span>
-        <h1>Care is close at hand</h1>
-        <p>
-          Our hospital operates around the clock, every day of the year.
-          Call, message or visit us whenever you need support.
-        </p>
+        <span class="public-page-eyebrow">{{ request.content.contact_intro.eyebrow }}</span>
+        <h1>{{ request.content.contact_intro.title }}</h1>
+        <p>{{ request.content.contact_intro.body }}</p>
         <div class="public-hero-actions">
-          <a href="tel:{{ request.contact.telephone }}" class="btn btn-light btn-lg">
+          {% if request.site_settings.telephone_href %}
+          <a href="{{ request.site_settings.telephone_href }}" class="btn btn-light btn-lg">
             <i class="bi bi-telephone-fill mr-2" aria-hidden="true"></i>
             Call now
           </a>
+          {% endif %}
           <a href="{% url 'communications:book_appointment' %}" class="btn btn-outline-light btn-lg">
             Request an appointment
           </a>
@@ -39,14 +38,14 @@
         <span class="contact-availability-icon">
           <i class="bi bi-clock-fill" aria-hidden="true"></i>
         </span>
-        <span>Open every day</span>
-        <strong>24 hours</strong>
-        <p>Including weekends and public holidays.</p>
-        <a href="https://api.whatsapp.com/send?phone={{ request.contact.telephone }}"
+        <span>{{ request.about_hero.availability_label }}</span>
+        <strong>{{ request.about_hero.availability_value }}</strong>
+        <p>{{ request.site_settings.availability_summary }}</p>
+        {% if request.site_settings.whatsapp_url %}<a href="{{ request.site_settings.whatsapp_url }}"
           target="_blank" rel="noopener">
           <i class="bi bi-whatsapp" aria-hidden="true"></i>
           Message us on WhatsApp
-        </a>
+        </a>{% endif %}
       </aside>
     </div>
   </div>
@@ -55,37 +54,43 @@
 <section class="contact-options" aria-labelledby="contact-options-title">
   <div class="container">
     <div class="contact-options-heading">
-      <span class="public-page-eyebrow">Reach our team</span>
-      <h2 id="contact-options-title">Choose what works for you</h2>
-      <p>Direct access to the hospital team, wherever you are.</p>
+      <span class="public-page-eyebrow">{{ request.content.contact_options.eyebrow }}</span>
+      <h2 id="contact-options-title">{{ request.content.contact_options.title }}</h2>
+      <p>{{ request.content.contact_options.body }}</p>
     </div>
 
     <div class="contact-option-grid">
-      <a class="contact-option-card" href="tel:{{ request.contact.telephone }}">
+      {% if request.site_settings.telephone_href %}
+      <a class="contact-option-card" href="{{ request.site_settings.telephone_href }}">
         <span><i class="bi bi-telephone" aria-hidden="true"></i></span>
         <small>Call the hospital</small>
         <strong>{{ request.contact.telephone }}</strong>
         <em>Tap to call <i class="bi bi-arrow-right" aria-hidden="true"></i></em>
       </a>
-      <a class="contact-option-card" href="mailto:{{ request.contact.email }}">
+      {% endif %}
+      {% if request.site_settings.email_href %}
+      <a class="contact-option-card" href="{{ request.site_settings.email_href }}">
         <span><i class="bi bi-envelope" aria-hidden="true"></i></span>
         <small>Email our team</small>
         <strong>{{ request.contact.email }}</strong>
         <em>Write to us <i class="bi bi-arrow-right" aria-hidden="true"></i></em>
       </a>
+      {% endif %}
+      {% if request.site_settings.whatsapp_url %}
       <a class="contact-option-card contact-option-card--whatsapp"
-        href="https://api.whatsapp.com/send?phone={{ request.contact.telephone }}"
+        href="{{ request.site_settings.whatsapp_url }}"
         target="_blank" rel="noopener">
         <span><i class="bi bi-whatsapp" aria-hidden="true"></i></span>
         <small>WhatsApp</small>
         <strong>Chat with Sinel</strong>
         <em>Start a conversation <i class="bi bi-arrow-right" aria-hidden="true"></i></em>
       </a>
+      {% endif %}
       <div class="contact-option-card">
         <span><i class="bi bi-geo-alt" aria-hidden="true"></i></span>
         <small>Digital address</small>
         <strong>{{ request.contact.gps }}</strong>
-        <em>Tema, Ghana</em>
+        <em>{{ request.content.contact_location.body }}</em>
       </div>
     </div>
   </div>
@@ -95,8 +100,8 @@
   <div class="container">
     <div class="contact-location-layout">
       <div class="contact-location-copy">
-        <span class="public-page-eyebrow">Visit the hospital</span>
-        <h2 id="contact-location-title">Find us in Tema</h2>
+        <span class="public-page-eyebrow">{{ request.content.contact_location.eyebrow }}</span>
+        <h2 id="contact-location-title">{{ request.content.contact_location.title }}</h2>
         <p>{{ request.contact.address }}</p>
 
         <div class="contact-location-detail">
@@ -110,26 +115,30 @@
           <span><i class="bi bi-clock-history" aria-hidden="true"></i></span>
           <div>
             <small>Hospital access</small>
-            <strong>Open 24 hours, every day</strong>
+            <strong>{{ request.site_settings.availability_summary }}</strong>
           </div>
         </div>
 
-        <a class="btn btn-primary btn-lg"
-          href="https://www.google.com/maps/search/?api=1&query=Sinel+Hospital+Tema"
+        {% if request.site_settings.directions_url %}<a class="btn btn-primary btn-lg"
+          href="{{ request.site_settings.directions_url }}"
           target="_blank" rel="noopener">
           Open in Google Maps
           <i class="bi bi-box-arrow-up-right ml-2" aria-hidden="true"></i>
-        </a>
+        </a>{% endif %}
       </div>
 
       <div class="contact-map">
+        {% if request.site_settings.map_embed_url %}
         <iframe
-          title="Map showing Sinel Specialist Hospital in Tema"
-          src="https://maps.google.com/maps?q=Sinel%20Hospital%20Tema&t=&z=14&ie=UTF8&iwloc=&output=embed"
+          title="Hospital location map"
+          src="{{ request.site_settings.map_embed_url }}"
           loading="lazy"
           referrerpolicy="no-referrer-when-downgrade"
           allowfullscreen>
         </iframe>
+        {% else %}
+        <p>Location details are being updated. Please contact the hospital for directions.</p>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -139,9 +148,9 @@
   <div class="container">
     <div class="contact-appointment-card">
       <div>
-        <span class="public-page-eyebrow">Planning your visit?</span>
-        <h2>Save time by requesting an appointment</h2>
-        <p>Share a few details and our team will help coordinate the next step.</p>
+        <span class="public-page-eyebrow">{{ request.content.contact_cta.eyebrow }}</span>
+        <h2>{{ request.content.contact_cta.title }}</h2>
+        <p>{{ request.content.contact_cta.body }}</p>
       </div>
       <a href="{% url 'communications:book_appointment' %}" class="btn btn-light btn-lg">
         Request an appointment

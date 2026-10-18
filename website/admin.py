@@ -1,4 +1,6 @@
 from django.contrib import admin
+from django import forms
+from .rich_content import RichContentFormMixin
 
 from .models import (
     About,
@@ -20,7 +22,6 @@ from .models import (
 
 admin.site.register(
     (
-        About,
         Award,
         Banner,
         Client,
@@ -31,8 +32,17 @@ admin.site.register(
         InsurancePartner,
         Media,
         OpeningHour,
-        Service,
         SocialMediaLink,
         TeamLead,
     )
 )
+
+
+class RichContentAdminForm(RichContentFormMixin, forms.ModelForm):
+    class Meta:
+        fields = "__all__"
+
+
+@admin.register(About, Service)
+class RichContentAdmin(admin.ModelAdmin):
+    form = RichContentAdminForm

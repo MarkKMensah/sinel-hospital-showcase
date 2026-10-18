@@ -1,0 +1,25 @@
+{% extends 'dashboard/base_template.html' %}
+{% block pagetitle %}Page content{% endblock %}
+{% block page-content-active %}mm-active{% endblock %}
+{% block content %}
+<div class="app-main__inner">
+  <div class="app-page-title"><div class="page-title-wrapper"><div class="page-title-heading"><div>
+    Page content
+    <div class="page-title-subheading">Choose a page section to update its text. Layout and button actions stay consistent.</div>
+  </div></div></div></div>
+  <p><a href="{% url 'dashboard:page_metadata' %}">Search and sharing information</a></p>
+  {% for group, sections in groups.items %}
+  <section class="main-card mb-4 card" aria-label="{{ group }} sections">
+    <div class="card-header">{{ group }}</div>
+    <div class="card-body p-0"><div class="table-responsive"><table class="table mb-0">
+      <thead><tr><th scope="col">Section</th><th scope="col">Heading</th><th scope="col">Last saved</th><th scope="col">Action</th></tr></thead>
+      <tbody>{% for section in sections %}<tr>
+        <td>{{ section.label }}</td><td>{{ section.title|default:'—' }}</td>
+        <td>{% if section.updated_at %}{{ section.updated_at|date:'M j, Y H:i' }}{% else %}Default text{% endif %}</td>
+        <td><a href="{% url 'dashboard:page_content_edit' section.key %}">{% if request.user.can_manage_content %}Edit{% else %}View{% endif %}<span class="sr-only"> {{ section.label }}</span></a></td>
+      </tr>{% endfor %}</tbody>
+    </table></div></div>
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}
