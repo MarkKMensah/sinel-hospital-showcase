@@ -1,9 +1,19 @@
 from django.urls import path
 from . import views
+from .curation import CurationEditView, CurationListView
+from .page_content_views import PageContentEditView, PageContentListView, PageMetadataEditView, PageMetadataListView
+from .site_settings_views import SiteSettingsView
 
 app_name = "dashboard"
 
 urlpatterns = [
+    path("site-settings", SiteSettingsView.as_view(), name="site_settings"),
+    path("page-content", PageContentListView.as_view(), name="page_content"),
+    path("page-content/<str:section_key>", PageContentEditView.as_view(), name="page_content_edit"),
+    path("page-metadata", PageMetadataListView.as_view(), name="page_metadata"),
+    path("page-metadata/<str:page_key>", PageMetadataEditView.as_view(), name="page_metadata_edit"),
+    path("display/<str:kind>", CurationListView.as_view(), name="curation"),
+    path("display/<str:kind>/<int:record_id>", CurationEditView.as_view(), name="curation_edit"),
     path("", views.IndexView.as_view(), name="index"),
     path("about", views.AboutView.as_view(), name="about"),
     path("awards", views.AwardsView.as_view(), name="awards"),

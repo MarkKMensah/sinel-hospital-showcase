@@ -1,5 +1,5 @@
 {% extends 'website/base_template.html' %}
-{% load static %}
+{% load static content_safety %}
 
 {% block about_active %}active{% endblock %}
 
@@ -57,22 +57,22 @@
       <article>
         <span><i class="bi bi-people" aria-hidden="true"></i></span>
         <div>
-          <h2>Family-centred</h2>
-          <p>Care designed around people, families and every stage of life.</p>
+          <h2>{{ request.content.about_highlight_family.title }}</h2>
+          <p>{{ request.content.about_highlight_family.body }}</p>
         </div>
       </article>
       <article>
         <span><i class="bi bi-heart-pulse" aria-hidden="true"></i></span>
         <div>
-          <h2>Specialist access</h2>
-          <p>Experienced teams working together across a broad range of services.</p>
+          <h2>{{ request.content.about_highlight_specialist.title }}</h2>
+          <p>{{ request.content.about_highlight_specialist.body }}</p>
         </div>
       </article>
       <article>
         <span><i class="bi bi-clock-history" aria-hidden="true"></i></span>
         <div>
-          <h2>Always available</h2>
-          <p>Round-the-clock support, including weekends and public holidays.</p>
+          <h2>{{ request.content.about_highlight_availability.title }}</h2>
+          <p>{{ request.content.about_highlight_availability.body }}</p>
         </div>
       </article>
     </div>
@@ -84,11 +84,11 @@
   <div class="container">
     <div class="about-introduction-layout">
       <div>
-        <span class="public-page-eyebrow">Welcome to Sinel</span>
-        <h2 id="about-introduction-title">Healthcare built around your wellbeing</h2>
+        <span class="public-page-eyebrow">{{ request.content.about_intro.eyebrow }}</span>
+        <h2 id="about-introduction-title">{{ request.content.about_intro.title }}</h2>
       </div>
       <div class="about-cms-copy about-overview-copy">
-        {{ about.overview|safe }}
+        {{ about.overview|rich_content }}
       </div>
     </div>
   </div>
@@ -97,23 +97,23 @@
 <section class="about-principles" aria-labelledby="about-principles-title">
   <div class="container">
     <div class="about-principles-heading">
-      <span class="public-page-eyebrow">What guides us</span>
-      <h2 id="about-principles-title">Our story, focus and people</h2>
-      <p>The commitments shaping how we serve every patient and family.</p>
+      <span class="public-page-eyebrow">{{ request.content.about_principles.eyebrow }}</span>
+      <h2 id="about-principles-title">{{ request.content.about_principles.title }}</h2>
+      <p>{{ request.content.about_principles.body }}</p>
     </div>
 
     <div class="about-principles-grid">
       <article class="about-principle about-principle--story">
         <span class="about-principle-icon"><i class="bi bi-journal-heart" aria-hidden="true"></i></span>
-        <div class="about-cms-copy">{{ about.mission|safe }}</div>
+        <div class="about-cms-copy">{{ about.mission|rich_content }}</div>
       </article>
       <article class="about-principle">
         <span class="about-principle-icon"><i class="bi bi-bullseye" aria-hidden="true"></i></span>
-        <div class="about-cms-copy">{{ about.vision|safe }}</div>
+        <div class="about-cms-copy">{{ about.vision|rich_content }}</div>
       </article>
       <article class="about-principle">
         <span class="about-principle-icon"><i class="bi bi-people-fill" aria-hidden="true"></i></span>
-        <div class="about-cms-copy">{{ about.value|safe }}</div>
+        <div class="about-cms-copy">{{ about.value|rich_content }}</div>
       </article>
     </div>
   </div>
@@ -135,12 +135,9 @@
   <div class="container">
     <div class="recognition-heading">
       <div>
-        <span class="public-page-eyebrow">Recognition</span>
-        <h2 id="recognition-title">Awards & Achievements</h2>
-        <p>
-          We are honoured to be recognised for our commitment to dependable,
-          compassionate healthcare.
-        </p>
+        <span class="public-page-eyebrow">{{ request.content.about_awards.eyebrow }}</span>
+        <h2 id="recognition-title">{{ request.content.about_awards.title }}</h2>
+        <p>{{ request.content.about_awards.body }}</p>
       </div>
       <span class="recognition-count">
         <i class="bi bi-award" aria-hidden="true"></i>
@@ -210,9 +207,9 @@
   <div class="container">
     <div class="about-cta-card">
       <div>
-        <span class="public-page-eyebrow">Your health, our focus</span>
-        <h2>Let’s take the next step together</h2>
-        <p>Talk with our team about the care or specialist support you need.</p>
+        <span class="public-page-eyebrow">{{ request.content.about_cta.eyebrow }}</span>
+        <h2>{{ request.content.about_cta.title }}</h2>
+        <p>{{ request.content.about_cta.body }}</p>
       </div>
       <div class="about-cta-actions">
         <a href="{% url 'communications:book_appointment' %}" class="btn btn-light btn-lg">

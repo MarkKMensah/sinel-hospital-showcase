@@ -134,10 +134,15 @@ class AboutContentDashboardTests(TestCase):
     def state(self):
         return list(About.objects.order_by("pk").values())
 
+    def post_section(self, payload, **kwargs):
+        section = payload["section"]
+        editor = self.client.get(self.url, {"section": section})
+        token = editor.context[f"{section}_form"].editor_revision
+        return self.client.post(self.url, {**payload, "editor_revision": token}, **kwargs)
+
     def test_manager_can_save_only_introduction_fields_with_success_notice(self):
         changes = {**HERO_COPY, "hero_title": "Updated by the hospital team"}
-        response = self.client.post(
-            self.url,
+        response = self.post_section(
             {"section": "hero", **changes, **dict.fromkeys(RICH_COPY, "Do not save")},
             follow=True,
         )
@@ -157,7 +162,7 @@ class AboutContentDashboardTests(TestCase):
         for name, limit in HERO_LIMITS.items():
             with self.subTest(field=name):
                 payload = {"section": "hero", **HERO_COPY, name: "X" * (limit + 1)}
-                response = self.client.post(self.url, payload)
+                response = self.post_section(payload)
                 self.assertEqual(response.status_code, 400)
                 self.assertEqual(response.context["active_section"], "hero")
                 self.assertIn(name, response.context["hero_form"].errors)
@@ -170,7 +175,7 @@ class AboutContentDashboardTests(TestCase):
         for url in (self.url, reverse("website:about")):
             self.assertEqual(self.client.get(url).status_code, 200)
             self.assertEqual(About.objects.count(), 0)
-        response = self.client.post(self.url, {"section": "hero", **HERO_COPY})
+        response = self.post_section({"section": "hero", **HERO_COPY})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(About.objects.count(), 1)
         created = About.objects.get()
@@ -181,9 +186,7 @@ class AboutContentDashboardTests(TestCase):
 
     def test_invalid_first_submission_does_not_create_record(self):
         About.objects.all().delete()
-        response = self.client.post(
-            self.url, {"section": "hero", **HERO_COPY, "hero_title": ""}
-        )
+        response = self.post_section({"section": "hero", **HERO_COPY, "hero_title": ""})
         self.assertEqual(response.status_code, 400)
         self.assertIn("hero_title", response.context["hero_form"].errors)
         self.assertEqual(About.objects.count(), 0)
@@ -214,8 +217,7 @@ class AboutContentDashboardTests(TestCase):
             with self.subTest(section=section):
                 original = self.state()[0]
                 replacement = f"<p>Updated {section}</p>"
-                response = self.client.post(
-                    self.url,
+                response = self.post_section(
                     {"section": section, section: replacement, "hero_title": "Ignore me"},
                 )
                 self.assertEqual(response.status_code, 302)

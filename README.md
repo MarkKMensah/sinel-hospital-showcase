@@ -8,9 +8,11 @@ a responsive public website with a secure content and operations dashboard,
 allowing the hospital team to manage evolving services without routine code
 changes.
 
-> This is a clean showcase snapshot with a single public history. It contains
-> no production credentials, patient records, database backups, uploaded
-> content, server access information, or production deployment configuration.
+> This showcase has its own public Git history, separate from the private
+> production repository. It excludes production credentials, patient records,
+> database backups, live media uploads, server access information, and production
+> deployment configuration. Public branding and application source are included
+> for portfolio review.
 
 ## Portfolio context
 
@@ -26,6 +28,10 @@ technical portfolio artifact rather than a production mirror.
   testimonials, awards, news, and appointment booking
 - Dashboard-managed homepage banners, featured service shortcuts, promotional
   ribbons, hospital video, and recognition content
+- Bounded editing for 34 established page sections and search/sharing metadata
+  on nine fixed routes, alongside shared contact, availability and social details
+- Curated team portraits, partner logos, gallery cover and image descriptions,
+  with explicit custom-page menu placement and ordering
 - Rotating homepage banners with editable headings and links, responsive image
   presentation, playback controls, and reduced-motion support
 - Consistent team visibility controls across the dashboard and public website
@@ -36,6 +42,8 @@ technical portfolio artifact rather than a production mirror.
 - Role-based staff access, administrator status management, access auditing,
   and token invalidation
 - Secure CKEditor 5 content authoring and restricted image uploads
+- Allowlisted rich-text sanitization on saves and public rendering, including
+  legacy stored content, with signed stale-form rejection in dashboard editors
 - Responsive galleries, testimonial navigation, partner presentation, and
   persistent appointment, telephone, and WhatsApp actions
 - Regression coverage across public pages, dashboard permissions, publishing
@@ -77,13 +85,53 @@ The platform was modernised around four priorities:
 
 The repository intentionally ships without real hospital records. Add sample
 content through Django administration or the project dashboard when running a
-local demonstration.
+local demonstration. Create a local administrator with:
+
+```bash
+docker compose exec web python manage.py createsuperuser
+```
+
+Use fictional identities and records only. No working account or password is
+bundled, and the example environment values are for local development only.
+Live hospital chat is disabled. Configure your own integration separately.
+The demo binds only to loopback; rebuild the image after source changes. Its
+database uses a named local volume, while uploaded demo media is not persisted
+when the web container is replaced.
+
+## Checks and engineering notes
+
+GitHub Actions runs isolated Django regression tests on SQLite and PostgreSQL 17,
+JavaScript behavior tests, migration-drift checks, dependency auditing, Python
+security scanning, a public-snapshot boundary check, and demo-container startup
+and startup-failure checks. The workflow uses SHA-pinned Node 24 actions and a
+fixed Ubuntu 24.04 runner; it has no deployment job and only read permission.
+
+To run the application checks without reading a workstation database:
+
+```bash
+python -m pip install -r requirements-dev.txt
+python manage.py check --settings=sinel_web.settings.testing
+python manage.py makemigrations --check --dry-run --settings=sinel_web.settings.testing
+python manage.py test --noinput --settings=sinel_web.settings.testing
+node --test tests/*.test.cjs
+python tools/check_public_snapshot.py --tree HEAD
+```
+
+See [the engineering overview](docs/showcase-engineering.md) for the content
+architecture, unhappy paths, and deliberate limits. A workflow definition is not
+a claim that a particular revision passed; use its exact GitHub Actions results.
 
 ## Repository boundary
 
 This public repository is not the production deployment source. Production
 history, infrastructure, environment files, backups, live media, credentials,
 and operational data are maintained separately and privately.
+
+Production Nginx/TLS configuration, deployment automation, and infrastructure
+tests are deliberately excluded. Their omission is a publication boundary, not
+an instruction to use the local demo as a production deployment template. Source
+updates arrive as reviewed, sanitized snapshots rather than private-history
+merges; public history contains only showcase work.
 
 Source is presented for portfolio review. Copyright remains with the respective
 owners; no licence is granted unless explicitly stated.

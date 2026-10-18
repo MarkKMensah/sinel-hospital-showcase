@@ -1,3 +1,4 @@
+from dashboard.testing_helpers import post_editor
 from io import BytesIO
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
@@ -111,7 +112,7 @@ class ServiceTeamLeadAssignmentTests(ServiceTeamLeadAssignmentFixtures, TestCase
     def test_create_without_team_leads_and_without_any_available_leads(self):
         self.visible_lead.visible = False
         self.visible_lead.save(update_fields=["visible"])
-        response = self.client.post(self.url, self.payload(create=True), follow=True)
+        response = post_editor(self.client, self.url, self.payload(create=True), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "New service was saved successfully.")
         service = Service.objects.get(title="New service")
@@ -120,7 +121,7 @@ class ServiceTeamLeadAssignmentTests(ServiceTeamLeadAssignmentFixtures, TestCase
 
     def test_create_with_multiple_visible_team_leads(self):
         second_lead = self.lead("Dr Second Visible", visible=True)
-        response = self.client.post(
+        response = post_editor(self.client,
             self.url,
             self.payload(doctors=[self.visible_lead.pk, second_lead.pk], create=True),
         )
@@ -132,7 +133,7 @@ class ServiceTeamLeadAssignmentTests(ServiceTeamLeadAssignmentFixtures, TestCase
         for selection in (None, []):
             with self.subTest(selection=selection):
                 self.service.doctors.set([self.visible_lead, self.hidden_lead])
-                response = self.client.post(self.url, self.payload(doctors=selection))
+                response = post_editor(self.client, self.url, self.payload(doctors=selection))
                 self.assertRedirects(response, reverse("dashboard:services"))
                 self.assertFalse(self.service.doctors.exists())
                 public = self.client.get(
@@ -153,7 +154,7 @@ class ServiceTeamLeadAssignmentTests(ServiceTeamLeadAssignmentFixtures, TestCase
         self.assertNotContains(response, self.other_hidden_lead.fullname)
 
     def test_unrelated_edit_preserves_hidden_association_and_original_image(self):
-        response = self.client.post(
+        response = post_editor(self.client,
             self.url, self.payload(doctors=[self.visible_lead.pk, self.hidden_lead.pk])
         )
         self.assertRedirects(response, reverse("dashboard:services"))
@@ -166,7 +167,7 @@ class ServiceTeamLeadAssignmentTests(ServiceTeamLeadAssignmentFixtures, TestCase
         self.assertNotContains(public, self.hidden_lead.fullname)
 
     def test_explicit_deselection_removes_hidden_assignment(self):
-        response = self.client.post(self.url, self.payload(doctors=[self.visible_lead.pk]))
+        response = post_editor(self.client, self.url, self.payload(doctors=[self.visible_lead.pk]))
         self.assertRedirects(response, reverse("dashboard:services"))
         self.assertCountEqual(self.service.doctors.all(), [self.visible_lead])
 
@@ -178,7 +179,7 @@ class ServiceTeamLeadAssignmentTests(ServiceTeamLeadAssignmentFixtures, TestCase
         other_service.doctors.add(self.other_hidden_lead)
         for create in (False, True):
             with self.subTest(create=create):
-                response = self.client.post(
+                response = post_editor(self.client,
                     self.url, self.payload(doctors=[self.other_hidden_lead.pk], create=create)
                 )
                 self.assertEqual(response.status_code, 400)
@@ -189,7 +190,7 @@ class ServiceTeamLeadAssignmentTests(ServiceTeamLeadAssignmentFixtures, TestCase
     def test_malformed_nonexistent_and_out_of_range_lead_ids_do_not_partially_save(self):
         for lead_id in ("not-an-id", "999999", "9" * 100, "-1"):
             with self.subTest(lead_id=lead_id):
-                response = self.client.post(
+                response = post_editor(self.client,
                     self.url, self.payload(doctors=[self.visible_lead.pk, lead_id])
                 )
                 self.assertEqual(response.status_code, 400)
@@ -202,7 +203,7 @@ class ServiceTeamLeadAssignmentTests(ServiceTeamLeadAssignmentFixtures, TestCase
         self.assertIn(candidate, response.context["form"].fields["doctors"].queryset)
         candidate.visible = False
         candidate.save(update_fields=["visible"])
-        response = self.client.post(self.url, self.payload(doctors=[candidate.pk]))
+        response = post_editor(self.client, self.url, self.payload(doctors=[candidate.pk]))
         self.assertEqual(response.status_code, 400)
         self.assert_original_service()
 
@@ -210,7 +211,7 @@ class ServiceTeamLeadAssignmentTests(ServiceTeamLeadAssignmentFixtures, TestCase
         candidate = self.lead("Dr Deleted", visible=True)
         candidate_id = candidate.pk
         candidate.delete()
-        response = self.client.post(self.url, self.payload(doctors=[candidate_id]))
+        response = post_editor(self.client, self.url, self.payload(doctors=[candidate_id]))
         self.assertEqual(response.status_code, 400)
         self.assertIn("doctors", response.context["form"].errors)
         self.assert_original_service()
@@ -219,7 +220,7 @@ class ServiceTeamLeadAssignmentTests(ServiceTeamLeadAssignmentFixtures, TestCase
         data = self.payload(doctors=[self.hidden_lead.pk])
         data.pop("visible")
         data["image"] = SimpleUploadedFile("invalid.png", b"not an image")
-        response = self.client.post(self.url, data)
+        response = post_editor(self.client, self.url, data)
         self.assertEqual(response.status_code, 400)
         form = response.context["form"]
         self.assertIn("image", form.errors)
@@ -234,7 +235,7 @@ class ServiceTeamLeadAssignmentTests(ServiceTeamLeadAssignmentFixtures, TestCase
     def test_invalid_title_preserves_selected_leads_and_visible_choice(self):
         data = self.payload(doctors=[self.hidden_lead.pk])
         data["title"] = ""
-        response = self.client.post(self.url, data)
+        response = post_editor(self.client, self.url, data)
         self.assertEqual(response.status_code, 400)
         form = response.context["form"]
         self.assertIn("title", form.errors)
@@ -248,7 +249,7 @@ class ServiceTeamLeadAssignmentTests(ServiceTeamLeadAssignmentFixtures, TestCase
                 self.assertEqual(self.client.get(self.url, {"service_id": service_id}).status_code, 404)
                 data = self.payload()
                 data["service_id"] = service_id
-                self.assertEqual(self.client.post(self.url, data).status_code, 404)
+                self.assertEqual(post_editor(self.client, self.url, data).status_code, 404)
                 self.assertEqual(Service.objects.count(), 1)
                 self.assert_original_service()
 
@@ -261,25 +262,25 @@ class ServiceTeamLeadAssignmentTests(ServiceTeamLeadAssignmentFixtures, TestCase
         for user in denied_users:
             with self.subTest(role=user.role, is_staff=user.is_staff):
                 self.client.force_login(user)
-                response = self.client.post(self.url, self.payload())
+                response = post_editor(self.client, self.url, self.payload())
                 self.assertEqual(response.status_code, 403)
                 self.assert_original_service()
         inactive = self.user("inactive", Administrator.Role.CONTENT_MANAGER, is_active=False)
         self.client.force_login(inactive)
-        self.assertEqual(self.client.post(self.url, self.payload()).status_code, 302)
+        self.assertEqual(post_editor(self.client, self.url, self.payload()).status_code, 302)
         self.client.logout()
-        self.assertEqual(self.client.post(self.url, self.payload()).status_code, 302)
+        self.assertEqual(post_editor(self.client, self.url, self.payload()).status_code, 302)
         self.assert_original_service()
 
     def test_auditor_can_view_form_but_cannot_submit_and_superuser_can_clear(self):
         auditor = self.user("viewer", Administrator.Role.AUDITOR)
         self.client.force_login(auditor)
         self.assertEqual(self.client.get(self.url, {"service_id": self.service.pk}).status_code, 200)
-        self.assertEqual(self.client.post(self.url, self.payload()).status_code, 403)
+        self.assertEqual(post_editor(self.client, self.url, self.payload()).status_code, 403)
         self.assert_original_service()
         superuser = self.user("super", Administrator.Role.SUPER_ADMIN, is_superuser=True)
         self.client.force_login(superuser)
-        self.assertRedirects(self.client.post(self.url, self.payload()), reverse("dashboard:services"))
+        self.assertRedirects(post_editor(self.client, self.url, self.payload()), reverse("dashboard:services"))
         self.assertFalse(self.service.doctors.exists())
 
     def test_csrf_protection_is_unchanged(self):
@@ -306,7 +307,7 @@ class ServiceTeamLeadAssignmentTests(ServiceTeamLeadAssignmentFixtures, TestCase
     def test_failed_relationship_save_rolls_back_scalar_fields_and_assignments(self):
         with patch.object(ServiceForm, "_save_m2m", side_effect=IntegrityError("Assignment changed concurrently")):
             with self.assertRaises(IntegrityError):
-                self.client.post(self.url, self.payload(doctors=[self.visible_lead.pk]))
+                post_editor(self.client, self.url, self.payload(doctors=[self.visible_lead.pk]))
         self.assert_original_service()
 
 

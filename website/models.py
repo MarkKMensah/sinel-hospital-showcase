@@ -2,13 +2,22 @@ import re
 from urllib.parse import parse_qs, urlparse
 
 from django.core.exceptions import ValidationError
-from django.core.validators import URLValidator
+from django.core.validators import MaxValueValidator, URLValidator
 from django.db import models
 from accounts.models import Administrator
 from django_ckeditor_5.fields import CKEditor5Field
 from django.urls import reverse
 from django.utils.html import strip_tags
 from django.utils.text import Truncator
+from .site_settings import validate_public_url
+
+
+def public_web_url(value):
+    try:
+        validate_public_url(value)
+    except (ValidationError, TypeError, ValueError):
+        return ""
+    return value or ""
 
 
 class Contact(models.Model):
@@ -62,6 +71,10 @@ class Media(models.Model):
     media_type = models.CharField(max_length=20, default="image")
     file = models.FileField(max_length=200, upload_to="uploads/images")
     visible = models.BooleanField(default=False)
+    featured = models.BooleanField(default=False)
+    featured_position = models.PositiveIntegerField(default=0, validators=[MaxValueValidator(9999)])
+    alternative_text = models.CharField(max_length=180, blank=True, default="")
+    credit = models.CharField(max_length=120, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -133,11 +146,7 @@ class Banner(models.Model):
                 args=[self.service_id],
             )
         if self.url:
-            try:
-                URLValidator(schemes=["http", "https"])(self.url)
-            except ValidationError:
-                pass
-            else:
+            if public_web_url(self.url):
                 return self.url
         return reverse("website:services")
 
@@ -296,6 +305,9 @@ class HomepageVideo(models.Model):
         blank=True,
         help_text="Optional fallback when no poster has been uploaded.",
     )
+    poster_alt = models.CharField(max_length=180, blank=True, default="")
+    duration_label = models.CharField(max_length=40, blank=True, default="")
+    link_label = models.CharField(max_length=60, default="Watch the hospital tour")
     visible = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -308,6 +320,8 @@ class HomepageVideo(models.Model):
 
     @property
     def youtube_id(self):
+        if not public_web_url(self.youtube_url):
+            return ""
         parsed = urlparse(self.youtube_url)
         hostname = (parsed.hostname or "").lower()
         video_id = ""
@@ -353,7 +367,7 @@ class HomepageVideo(models.Model):
             and self.poster.storage.exists(self.poster.name)
         ):
             return self.poster.url
-        return self.poster_url or self.thumbnail_url
+        return public_web_url(self.poster_url) or self.thumbnail_url
 
     def clean(self):
         super().clean()
@@ -390,6 +404,8 @@ class TeamLead(models.Model):
     title = models.CharField(max_length=500)
     photo = models.ImageField(upload_to="uploads/images", )
     visible = models.BooleanField(default=False)
+    featured = models.BooleanField(default=False)
+    featured_position = models.PositiveIntegerField(default=0, validators=[MaxValueValidator(9999)])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -402,7 +418,7 @@ class TeamLead(models.Model):
 
     @property
     def public_linkedin_url(self):
-        if not self.linkedin:
+        if not public_web_url(self.linkedin):
             return ""
         parsed = urlparse(self.linkedin)
         hostname = (parsed.hostname or "").lower()
@@ -502,7 +518,7 @@ class Award(models.Model):
             and self.image.storage.exists(self.image.name)
         ):
             return self.image.url
-        return self.image_url
+        return public_web_url(self.image_url)
 
     @property
     def display_meta(self):
@@ -570,9 +586,15 @@ class Partner(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     visible = models.BooleanField(default=False)
+    featured = models.BooleanField(default=False)
+    featured_position = models.PositiveIntegerField(default=0, validators=[MaxValueValidator(9999)])
 
     def __str__(self) -> str:
         return self.name
+
+    @property
+    def public_website(self):
+        return public_web_url(self.website)
 
 
 class Notification(models.Model):
@@ -591,3 +613,13 @@ class Notification(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+    @property
+    def public_url(self):
+        return public_web_url(self.url)
+
+
+# Keep typed content models discoverable by Django's normal model/migration
+# registry without coupling their contracts to this legacy model module.
+from .page_content import PageMetadata, PageSection  # noqa: E402,F401
+from .site_settings import SiteSettings  # noqa: E402,F401

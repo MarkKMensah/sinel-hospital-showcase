@@ -24,6 +24,8 @@
     <div class="card-body">
       <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
+        <input type="hidden" name="editor_revision" value="{{ editor_revision }}">
+        {% if form.non_field_errors %}<p><a href="{{ editor_reload_url }}" target="_blank" rel="noopener">Open latest saved version</a></p>{% endif %}
         {% if banner %}
         <input type="hidden" name="banner_id" value="{{ banner.id }}">
         {% endif %}

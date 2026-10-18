@@ -24,7 +24,9 @@
     <div class="main-card mb-3 col-md-12 mx-auto card">
         <div class="card-body col-md-8 mx-auto">
             <form method="POST" enctype="multipart/form-data">
-                {% csrf_token %}
+        {% csrf_token %}
+        <input type="hidden" name="editor_revision" value="{{ editor_revision }}">
+        {% if form.non_field_errors %}<p><a href="{{ editor_reload_url }}" target="_blank" rel="noopener">Open latest saved version</a></p>{% endif %}
                 <input type="hidden" name="team_lead_id" value="{{team_lead.id|default_if_none:''}}">
                 {% if form.errors %}
                 <div class="alert alert-danger" role="alert">

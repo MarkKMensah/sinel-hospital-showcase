@@ -1,7 +1,10 @@
 from blog.models import Page
-from website.models import Contact, Notification, Service, Testimonial
+from website.models import About, Contact, Notification, Service, Testimonial
+from website.page_content import public_sections, metadata_for_request
+from website.site_settings import load_public_site_settings
 from django.core.exceptions import PermissionDenied
 from django.utils import timezone
+from django.utils.functional import SimpleLazyObject
 
 
 class DashboardAuthorizationMiddleware:
@@ -62,10 +65,15 @@ class CustomMiddleWares(object):
 
     def __call__(self, request):
         request.contact = Contact.objects.first()
+        request.about_hero = SimpleLazyObject(lambda: About.objects.first() or About())
+        request.site_settings = SimpleLazyObject(lambda: load_public_site_settings(contact=request.contact))
+        request.content = SimpleLazyObject(public_sections)
+        request.page_meta = SimpleLazyObject(lambda: metadata_for_request(request))
         request.notification = Notification.objects.filter(
             available_at__lte=timezone.now(),
             expires_at__gt=timezone.now()).order_by("-updated_at").first()
-        request.pages = Page.objects.filter(visible=True).order_by("title")[:5]
+        request.pages = Page.objects.filter(visible=True, show_in_footer=True).order_by("menu_position", "title", "pk")
+        request.header_pages = Page.objects.filter(visible=True, show_in_header=True).order_by("menu_position", "title", "pk")
         request.services = Service.objects.filter(visible=True).order_by("title")
         request.testimonials = Testimonial.objects.filter(visible=True)
         return self.get_response(request)

@@ -1,0 +1,20 @@
+<input type="hidden" name="editor_revision" value="{{ editor_revision }}">
+<p class="text-muted">Fields marked * are required.</p>
+{% if form.errors %}
+<div class="alert alert-danger" role="alert">
+  Please check the highlighted fields. Your changes have not been saved.
+  {{ form.non_field_errors }}
+  <a href="{{ editor_reload_url }}" target="_blank" rel="noopener">Open latest saved version</a>
+</div>
+{% endif %}
+{% for field in form %}
+<div class="form-group">
+  <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span aria-hidden="true">*</span>{% endif %}</label>
+  {{ field }}
+  {% if field.help_text %}<small class="form-text text-muted" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</small>{% endif %}
+  {% if field.errors %}<div class="text-danger" role="alert">{{ field.errors }}</div>{% endif %}
+</div>
+{% endfor %}
+{% if form.is_bound and form.is_multipart %}
+<p class="text-muted">Existing files stay unchanged until a valid save. If you selected a replacement, select it again before resubmitting.</p>
+{% endif %}

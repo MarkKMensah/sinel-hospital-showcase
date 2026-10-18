@@ -12,8 +12,8 @@
 <section class="appointment-hero">
   <div class="container">
     <div class="appointment-hero-copy">
-      <span class="sinel-eyebrow">Plan your visit</span>
-      <h1>Request an appointment</h1>
+      <span class="sinel-eyebrow">{{ request.content.booking_intro.eyebrow }}</span>
+      <h1>{{ request.content.booking_intro.title }}</h1>
       <p>
         Tell us when you would prefer to visit and what care you need.
         Our team will contact you to confirm the appointment.
@@ -30,11 +30,8 @@
           <span class="appointment-guidance-icon" aria-hidden="true">
             <i class="bi bi-calendar2-check"></i>
           </span>
-          <h2>A simple way to get started</h2>
-          <p>
-            Choose your preferred date and time in one field. A member of
-            the Sinel team will follow up to confirm availability.
-          </p>
+          <h2>{{ request.content.booking_guidance.title }}</h2>
+          <p>{{ request.content.booking_guidance.body }}</p>
           <div class="appointment-emergency">
             <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
             <div>

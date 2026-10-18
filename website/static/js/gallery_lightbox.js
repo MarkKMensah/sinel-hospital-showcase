@@ -6,6 +6,7 @@ if (galleryDialog && typeof galleryDialog.showModal === "function") {
   const galleryTitle = galleryDialog.querySelector(".gallery-lightbox__title");
   const galleryCaption = galleryDialog.querySelector(".gallery-lightbox__caption");
   const galleryCounter = galleryDialog.querySelector(".gallery-lightbox__counter");
+  const galleryCredit = galleryDialog.querySelector(".gallery-lightbox__credit");
   const previousButton = galleryDialog.querySelector(".gallery-lightbox__previous");
   const nextButton = galleryDialog.querySelector(".gallery-lightbox__next");
   let currentIndex = 0;
@@ -20,6 +21,10 @@ if (galleryDialog && typeof galleryDialog.showModal === "function") {
     galleryTitle.textContent = link.dataset.galleryTitle || galleryImage.alt;
     galleryCaption.textContent =
       link.dataset.galleryCaption || galleryImage.alt;
+    if (galleryCredit) {
+      galleryCredit.textContent = link.dataset.galleryCredit || "";
+      galleryCredit.hidden = !galleryCredit.textContent;
+    }
     galleryCounter.textContent = `${currentIndex + 1} / ${galleryLinks.length}`;
   };
 

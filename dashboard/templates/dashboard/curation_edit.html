@@ -1,0 +1,18 @@
+{% extends 'dashboard/base_template.html' %}
+{% block pagetitle %}{{ title }}{% endblock %}
+{% block content %}
+<div class="app-main__inner">
+  <h1 class="h3">{{ label }}</h1><p>{{ guidance }}</p>
+  {% if not record.visible %}<p class="alert alert-warning">This record is hidden. Display settings do not make it visible.</p>{% endif %}
+  <div class="card p-4"><form method="post">{% csrf_token %}
+    <input type="hidden" name="editor_revision" value="{{ editor_revision }}">
+    {{ form.non_field_errors }}
+    {% for field in form %}<div class="form-group{% if field.field.widget.input_type == 'checkbox' %} form-check{% endif %}">
+      {{ field.label_tag }} {{ field }} {{ field.errors }}{% if field.help_text %}<small class="form-text text-muted" id="{{ field.auto_id }}_helptext">{{ field.help_text }}</small>{% endif %}
+    </div>{% endfor %}
+    {% if request.user.can_manage_content %}<button class="btn btn-primary" type="submit">Save display settings</button>{% endif %}
+    <a class="btn btn-light" href="{% url 'dashboard:curation' kind %}">Cancel</a>
+    <a class="d-block mt-3" href="{{ reload_url }}" target="_blank" rel="noopener">Open latest version in another tab</a>
+  </form></div>
+</div>
+{% endblock %}

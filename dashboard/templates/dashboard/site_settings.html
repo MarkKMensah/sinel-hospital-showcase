@@ -1,0 +1,35 @@
+{% extends 'dashboard/base_template.html' %}
+{% block site-settings-active %}mm-active{% endblock %}
+{% block pagetitle %}Site settings{% endblock %}
+{% block content %}
+<div class="app-main__inner">
+  <div class="app-page-title">
+    <div class="page-title-wrapper">
+      <div class="page-title-heading"><div>Site settings
+        <div class="page-title-subheading">Manage availability, social links and WhatsApp.</div>
+      </div></div>
+    </div>
+  </div>
+  <div class="main-card mb-3 p-4 card">
+    <p>For the address, telephone, email and map location, use <a href="{% url 'dashboard:contact' %}">Contact</a>. The years-of-care and availability summaries are in <a href="{% url 'dashboard:about' %}">About</a>.</p>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {{ settings_form.revision_token }}
+      {% if settings_form.errors %}
+      <div class="alert alert-danger" role="alert">Please review the settings below.{{ settings_form.non_field_errors }}{{ settings_form.revision_token.errors }}<a href="{% url 'dashboard:site_settings' %}" target="_blank" rel="noopener">Open latest saved version in another tab</a></div>
+      {% endif %}
+      <div class="row">
+        {% for field in settings_form.visible_fields %}
+        <div class="form-group col-12 {% if field.name != 'availability_summary' %}col-lg-6{% endif %}">
+          <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span aria-hidden="true">*</span>{% endif %}</label>
+          {{ field }}
+          {{ field.errors }}
+          <small class="form-text text-muted" id="{{ field.id_for_label }}_help">{{ field.help_text }}{% if field.field.max_length %} Up to {{ field.field.max_length }} characters.{% endif %}</small>
+        </div>
+        {% endfor %}
+      </div>
+      {% if request.user.can_manage_content %}<button class="btn btn-primary" type="submit">Save changes</button>{% endif %}
+    </form>
+  </div>
+</div>
+{% endblock %}

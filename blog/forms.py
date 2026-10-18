@@ -2,6 +2,7 @@ from django import forms
 from django_ckeditor_5.widgets import CKEditor5Widget
 
 from .models import Post, Page
+from website.rich_content import RichContentFormMixin
 
 
 def rich_text_widget():
@@ -11,26 +12,15 @@ def rich_text_widget():
     )
 
 
-class PostForm(forms.ModelForm):
+class PostForm(RichContentFormMixin, forms.ModelForm):
     class Meta:
         model = Post
-        exclude = [
-            "id",
-            'by',
-            "created_at",
-            "update_at",
-        ]
+        fields = ["title", "content", "thumbnail", "tags", "visible"]
         widgets = {"content": rich_text_widget()}
 
 
-class PageForm(forms.ModelForm):
+class PageForm(RichContentFormMixin, forms.ModelForm):
     class Meta:
         model = Page
-        exclude = [
-            "id",
-            'by',
-            "slug",
-            "created_at",
-            "update_at",
-        ]
+        fields = ["title", "content", "visible"]
         widgets = {"content": rich_text_widget()}

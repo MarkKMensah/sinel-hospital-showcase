@@ -212,6 +212,10 @@
                             {% endif %}
                             {% if request.user.can_view_content %}
                             <li class="app-sidebar__heading">Website</li>
+                            <li><a href="{% url 'dashboard:page_content' %}"><i class="metismenu-icon bi bi-card-text"></i> Page text</a></li>
+                            <li><a href="{% url 'dashboard:site_settings' %}"><i class="metismenu-icon bi bi-gear"></i> Shared details</a></li>
+                            <li><a href="{% url 'dashboard:curation' 'team' %}"><i class="metismenu-icon bi bi-layout-text-window"></i> Featured content &amp; links</a></li>
+                            <li><a href="{% url 'dashboard:page_metadata' %}"><i class="metismenu-icon bi bi-search"></i> Search descriptions</a></li>
                             <li>
                                 <a href="{% url 'dashboard:homepage_content'%}"
                                     class="{% block homepage-page-active %}{% endblock %}">

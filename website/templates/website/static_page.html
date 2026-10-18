@@ -1,6 +1,6 @@
 {% extends 'website/base_template.html' %}
 
-{% load static %}
+{% load static content_safety %}
 
 {% block content %}
 
@@ -23,7 +23,7 @@
     <div class="row justify-content-center">
       <div class="col-lg-8 wow fadeInUp">
         <div class="text-lg">
-          {{page.content|safe}}
+          {{page.content|rich_content}}
         </div>
       </div>
     </div>

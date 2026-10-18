@@ -1,0 +1,20 @@
+{% extends 'dashboard/base_template.html' %}
+{% block pagetitle %}Search and sharing{% endblock %}
+{% block page-content-active %}mm-active{% endblock %}
+{% block content %}
+<div class="app-main__inner">
+  <div class="app-page-title"><div class="page-title-wrapper"><div class="page-title-heading"><div>
+    Search and sharing
+    <div class="page-title-subheading">Set a browser title and short description for each main page.</div>
+  </div></div></div></div>
+  <p><a href="{% url 'dashboard:page_content' %}">Back to page content</a></p>
+  <div class="main-card mb-4 card"><div class="card-body p-0"><div class="table-responsive"><table class="table mb-0">
+    <thead><tr><th scope="col">Page</th><th scope="col">Custom title</th><th scope="col">Action</th></tr></thead>
+    <tbody>{% for page in pages %}<tr>
+      <td>{{ page.label }}</td><td>{{ page.record.title|default:'Page default' }}</td>
+      <td><a href="{% url 'dashboard:page_metadata_edit' page.key %}">{% if request.user.can_manage_content %}Edit{% else %}View{% endif %}<span class="sr-only"> {{ page.label }}</span></a></td>
+    </tr>{% endfor %}</tbody>
+  </table></div></div></div>
+  <p class="text-muted">Service, article and additional-page titles and descriptions follow their visible content.</p>
+</div>
+{% endblock %}

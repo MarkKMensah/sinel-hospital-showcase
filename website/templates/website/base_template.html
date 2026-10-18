@@ -6,7 +6,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
   <meta name="copyright" content="MACode ID, https://sinel.com/" />
-  <title>Sinel | Your Specialist Family Hospital</title>
+  <title>{{ request.page_meta.title|default:'Sinel | Your Specialist Family Hospital' }}</title>
+  {% if request.page_meta.description %}<meta name="description" content="{{ request.page_meta.description }}">{% endif %}
+  <meta property="og:title" content="{{ request.page_meta.title|default:'Sinel | Your Specialist Family Hospital' }}">
+  {% if request.page_meta.description %}<meta property="og:description" content="{{ request.page_meta.description }}">{% endif %}
 
   {% load static %}
   <link rel="stylesheet" href="{% static 'css/maicons.css' %}" />
@@ -19,7 +22,7 @@
   <link rel="stylesheet" href="{% static 'css/testimonial_carousel.css' %}?v=20260729-3">
   <link rel="stylesheet" href="{% static 'css/website_style.css' %}">
   <link rel="stylesheet" href="{% static 'css/modification_styles.css' %}">
-  <link rel="stylesheet" href="{% static 'css/site_refresh.css' %}?v=20261008-2">
+  <link rel="stylesheet" href="{% static 'css/site_refresh.css' %}?v=20261017-1">
 
   {% block styleblock %}{% endblock %}
 
@@ -30,7 +33,7 @@
   {% if request.notification %}
   {% block notification_block %}
   <div class="notification-bar" data-notification-id="{{request.notification.content_hash}}">
-    <a {%if request.notification.url %} href="{{request.notification.url}}" {%endif%} style="color: white;">
+    <a {%if request.notification.public_url %} href="{{request.notification.public_url}}" {%endif%} style="color: white;">
       <h4>{{request.notification.title}}</h4>
       <p>{{request.notification.message}}</p>
     </a>
@@ -48,12 +51,12 @@
       <i class="bi bi-calendar"></i>
       <span>Book</span>
     </a>
-    <a href="tel:{{request.contact.telephone}}"
+    <a {% if request.site_settings.telephone_href %}href="{{ request.site_settings.telephone_href }}"{% else %}aria-disabled="true"{% endif %}
       class="mobile-contact-action mobile-contact-action--call">
       <i class="bi bi-telephone-plus"></i>
       <span>Call</span>
     </a>
-    <a href="https://api.whatsapp.com/send?phone={{request.contact.telephone}}"
+    <a {% if request.site_settings.whatsapp_url %}href="{{ request.site_settings.whatsapp_url }}"{% else %}aria-disabled="true"{% endif %}
       class="mobile-contact-action mobile-contact-action--whatsapp"
       target="_blank" rel="noopener">
       <i class="bi bi-whatsapp"></i>
@@ -120,6 +123,14 @@
       <span class="nav-item {% block blog_active %}{% endblock %}">
         <a class="nav-link" href="{% url 'blog:posts' %}">Sinel News</a>
       </span>
+      {% if request.header_pages %}
+      <li class="nav-item page-links-nav"><details>
+        <summary class="nav-link">More</summary>
+        <ul class="page-links-menu">
+          {% for page in request.header_pages %}<li><a href="{% url 'website:static_page_view' page.id page.slug %}">{{ page.navigation_label }}</a></li>{% endfor %}
+        </ul>
+      </details></li>
+      {% endif %}
     </ul>
     <!-- .row -->
   </div>
@@ -155,14 +166,14 @@
           </li>
 
           <li>
-            <a href="tel:{{request.contact.telephone}}"
+            <a {% if request.site_settings.telephone_href %}href="{{ request.site_settings.telephone_href }}"{% else %}aria-disabled="true"{% endif %}
               class="btn header-contact-button header-contact-button--call sinel-call-button">
               <i class="bi bi-telephone-plus"></i>
               <span>Call {{request.contact.telephone}}</span>
             </a>
           </li>
           <li>
-            <a href="https://api.whatsapp.com/send?phone={{request.contact.telephone}}"
+            <a {% if request.site_settings.whatsapp_url %}href="{{ request.site_settings.whatsapp_url }}"{% else %}aria-disabled="true"{% endif %}
               class="btn header-contact-button header-contact-button--whatsapp"
               target="_blank" rel="noopener">
               <i class="bi bi-whatsapp"></i>
@@ -189,6 +200,9 @@
       <h4 class="mt-4"> <a href="{% url 'website:services' %}"><i class="bi bi-gear"></i> Services</a></h4>
       <h4 class="mt-4"> <a href="{% url 'website:gallery' %}"><i class="bi bi-image"></i> Media</a></h4>
       <h4 class="mt-4"> <a href="{% url 'blog:posts' %}"><i class="bi bi-book"></i> Sinel News</a></h4>
+      {% for page in request.header_pages %}
+      <h4 class="mt-4"><a href="{% url 'website:static_page_view' page.id page.slug %}">{{ page.navigation_label }}</a></h4>
+      {% endfor %}
     </div>
   </div>
 
@@ -214,9 +228,9 @@
     <div class="container">
       <div class="testimonials-heading">
         <div>
-          <span>Patient voices</span>
-          <h2 id="public-testimonials-title">What they say about us</h2>
-          <p>Real experiences shared by patients and families we have cared for.</p>
+          <span>{{ request.content.shared_testimonials.eyebrow }}</span>
+          <h2 id="public-testimonials-title">{{ request.content.shared_testimonials.title }}</h2>
+          <p>{{ request.content.shared_testimonials.body }}</p>
         </div>
       </div>
 
@@ -272,25 +286,28 @@
         <div class="col-sm-6 col-lg-3 py-3">
           <h5>Contact</h5>
           <p class="footer-link mt-2">{{request.contact.address}}</p>
-          <a href="#" class="footer-link">{{request.contact.telephone}}</a>
-          <a href="#" class="footer-link">{{request.contact.email}}</a>
+          {% if request.site_settings.telephone_href %}<a href="{{ request.site_settings.telephone_href }}" class="footer-link">{{request.contact.telephone}}</a>{% endif %}
+          {% if request.site_settings.email_href %}<a href="{{ request.site_settings.email_href }}" class="footer-link">{{request.contact.email}}</a>{% endif %}
+          <p class="footer-link mt-2">{{ request.site_settings.availability_summary }}</p>
 
+          {% if request.site_settings.facebook_url or request.site_settings.instagram_url or request.site_settings.youtube_url %}
           <h5 class="mt-3">Social Media</h5>
           <div class="footer-sosmed mt-3">
-            <a href="https://www.facebook.com/SINELHOSPITALTEMA" target="_blank"><span
-                class="mai-logo-facebook-f"></span></a>
-            <a href="https://www.instagram.com/sinelhospital/" target="_blank"><span
-                class="mai-logo-instagram"></span></a>
-            <a href="https://www.youtube.com/channel/UCdRPeJPD-ixsa1y9zVFkKIQ" target="_blank"><span
-                class="mai-logo-youtube"></span></a>
+            {% if request.site_settings.facebook_url %}<a href="{{ request.site_settings.facebook_url }}" target="_blank" rel="noopener noreferrer" aria-label="Sinel on Facebook"><span
+                class="mai-logo-facebook-f" aria-hidden="true"></span></a>{% endif %}
+            {% if request.site_settings.instagram_url %}<a href="{{ request.site_settings.instagram_url }}" target="_blank" rel="noopener noreferrer" aria-label="Sinel on Instagram"><span
+                class="mai-logo-instagram" aria-hidden="true"></span></a>{% endif %}
+            {% if request.site_settings.youtube_url %}<a href="{{ request.site_settings.youtube_url }}" target="_blank" rel="noopener noreferrer" aria-label="Sinel on YouTube"><span
+                class="mai-logo-youtube" aria-hidden="true"></span></a>{% endif %}
           </div>
+          {% endif %}
         </div>
         <div class="col-sm-8 col-lg-8 py-3">
           <h5>Company</h5>
           <ul class="row footer-menu">
             {% for page in request.pages %}
             <li class="col-md-3 col-6"><a
-                href="{% url 'website:static_page_view' page.id page.slug %}">{{page.title}}</a></li>
+                href="{% url 'website:static_page_view' page.id page.slug %}">{{page.navigation_label}}</a></li>
             {% endfor %}
           </ul>
         </div>
@@ -310,32 +327,7 @@
   <script src="{% static 'js/testimonial_carousel.js' %}?v=20260729-3"></script>
   <script src="{% static 'js/modification.js' %}"></script>
 
-  <!--Start of Tawk.to Script-->
-  <script type="text/javascript">
-    // Start of Tawk.to Script
-    var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
-    (function () {
-      var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
-      s1.async = true;
-      s1.src = 'https://embed.tawk.to/6239e8322bd26d087e7426bb/1fup361u2';
-      s1.charset = 'UTF-8';
-      s1.setAttribute('crossorigin', '*');
-      s0.parentNode.insertBefore(s1, s0);
-    })();
-    // End of Tawk.to Script
-
-    // var Tawk_API = Tawk_API || {}, Tawk_LoadStart = new Date();
-    // (function () {
-    //   var s1 = document.createElement("script"), s0 = document.getElementsByTagName("script")[0];
-    //   s1.async = true;
-    //   s1.src = 'https://embed.tawk.to/61a4b93e9099530957f71e6e/1flln7c04';
-    //   s1.charset = 'UTF-8';
-    //   s1.setAttribute('crossorigin', '*');
-    //   s0.parentNode.insertBefore(s1, s0);
-    // })();
-
-  </script>
-  <!--End of Tawk.to Script-->
+  <!-- Live chat is disabled in this local portfolio demo. Configure your own integration separately. -->
 
   {% block scriptblock %}{% endblock %}
 </body>
